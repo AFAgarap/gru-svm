@@ -44,6 +44,11 @@ The proposed model will use deep <i>recurrent neural networks</i> (RNNs) with <i
 
 Lastly, the data to be used in this study will be the 2013 traffic data obtained by the honeypot systems in Kyoto University (<a href="http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf">Song, Takakura, & Okabe, 2006</a>), a sequential data in nature, hence the use of RNNs.
 
-<!-- ![](figures/gru.png) from [Chris Olah's Blog](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
-![](figures/data.png)
+
+## Proposed GRU-SVM Model
+Similar to the work done by <a href="http://ieeexplore.ieee.org/abstract/document/6544391/">Alalshekmubarak & Smith, 2013</a>, the present study proposes to use SVM as the classification function in an RNN. The difference being instead of ESN, the RNN class to be used in the study is the GRU model (see <a href='figures/gru.png'>Figure 4</a>).
+
+![](figures/gru.png)
+Figure 4: Image from [Chris Olah's Blog](http://colah.github.io/posts/2015-08-Understanding-LSTMs/).
+<!-- ![](figures/data.png)
 ![](figures/svm.png) -->
