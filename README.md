@@ -17,6 +17,9 @@ Gated Recurrent Unit (GRU) is a recently published variant of the Long Short-Ter
 }
 ```
 
+## Introduction
+The annual cost to the global economy due to cybercrime could be as high as $575 billion, which includes both the gain to criminals and the costs to companies for defense and recovery <a href="https://goo.gl/CHFpgF">(Center for Strategic and International Studies, 2014)</a>. It is even projected that the said cost will reach $2 trillion by 2019 (<a href="https://www.juniperresearch.com/press/press-releases/cybercrime-cost-businesses-over-2trillion">Juniper, 2015</a>; <a href="https://www.forbes.com/sites/stevemorgan/2016/01/17/cyber-crime-costs-projected-to-reach-2-trillion-by-2019">Morgan, 2016</a>).
+
 <!-- ![](figures/gru.png) from [Chris Olah's Blog](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 ![](figures/data.png)
 ![](figures/svm.png) -->
