@@ -1,8 +1,6 @@
 Intrusion Detection using Support Vector Machine (SVM) as Classifier in a Deep Recurrent Neural Network (RNN)
 ===
 
-The full paper on this proposal may be read at [ResearchGate](https://goo.gl/muZP5A)
-
 ## Abstract
 Gated Recurrent Unit (GRU) is a recently published variant of the Long Short-Term Memory (LSTM) network, designed to solve the vanishing gradient and exploding gradient problems. However, its main objective is to solve the long-term dependency problem in Recurrent Neural Networks (RNNs), which prevents the network to connect an information from previous iteration with the current iteration. This study proposes a modification on the GRU model, having Support Vector Machine (SVM) as its classifier instead of the Softmax function. The classifier is responsible for the output of a network in a classification problem. SVM was chosen over Softmax for its efficiency in learning. The proposed model will then be used for intrusion detection, with the dataset from Kyoto University's honeypot system in 2013 which will serve as both its training and testing data.
 
@@ -43,6 +41,8 @@ This research presents a modified version of the novel approach proposed by <a h
 The proposed model will use deep <i>recurrent neural networks</i> (RNNs) with <i>gated recurrent units</i> (GRUs) in place of ESN. RNNs are used for analyzing and/or predicting sequential data, which makes it a viable candidate for intrusion detection (<a href="http://ecite.utas.edu.au/75263">Negnevitsky, 2011</a>; <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, 2015</a>). In addition, the RNN architecture has already been used in a study for detecting credit card fraud through fraudulent behavior (by analyzing user logs) (<a href="http://lab.iisec.ac.jp/~tanaka_lab/images/pdf/kennkyukai/kennkyukai-2016-10.pdf">Ando, 2016</a>), but with the absence of SVM.
 
 Lastly, the data to be used in this study will be the 2013 traffic data obtained by the honeypot systems in Kyoto University (<a href="http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf">Song, Takakura, & Okabe, 2006</a>), a sequential data in nature, hence the use of RNNs.
+
+The full paper on this proposal may be read at [ResearchGate](https://goo.gl/muZP5A).
 <!-- ![](figures/gru.png) from [Chris Olah's Blog](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 ![](figures/data.png)
 ![](figures/svm.png) -->
