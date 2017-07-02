@@ -26,3 +26,35 @@ class GRU(object):
 
 		self.weights = [self.Wxh, self.Wxr, self.Wxz, self.Rhh, self.Rhr, self.Rhz,
 						self.bh, self.br, self.bz, self.Why]
+
+	def sigmoid(self, x):
+		''' The sigmoid activation function '''
+		sigmoid_val= 1 / (1 + np.exp(-x))
+		return sigmoid_val
+
+	def update_gate(self, Wxz, xs, Rhz, hs, bz):
+		''' Update Gate for GRU '''
+		z_bar = np.dot(Wxz, xs) + np.dot(Rhz, hs) + bz
+		z = sigmoid(z_bar)
+		return z
+
+	def reset_gate(self, Wxr, xs, Rhr, hs, br):
+		''' Reset Gate for GRU '''
+		r_bar = np.dot(Wxr, xs) + np.dot(Rhr, hs) + br
+		r = sigmoid(r_bar)
+		return r
+
+	def hidden_cell_bar(self, Wxh, xs, Rhh, rs, hs, bh):
+		''' Candidate Value for Cell Output '''
+		h_bar = np.dot(Wxh, xs) + np.dot(Rhh, np.multiply(rs, hs)) + bh
+		h = np.tanh(h_bar)
+		return h
+
+	def hidden_cell(self, hs, zs, hs_prev):
+		'''
+		Compute new cell output by interpolating
+		between candidate value and old
+		'''
+		ones = np.ones_like(zs)
+		h = np.multiply(hs, zs) + np.multiply(hs_prev, ones - zs)
+		return h
