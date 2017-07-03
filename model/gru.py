@@ -7,25 +7,50 @@ class GRU(object):
 		'''Class implementing GRU'''
 
 		# Input weights
-		self.Wxh = np.random.randn(hidden_size, input_size) * 1
-		self.Wxr = np.random.randn(hidden_size, input_size) * 1
-		self.Wxz = np.random.randn(hidden_size, input_size) * 1
+		# self.Wxh = tf.Variable(tf.zeros([input_size, hidden_size]))
+		# self.Wxr = tf.Variable(tf.zeros([input_size, hidden_size]))
+		# self.Wxz = tf.Variable(tf.zeros([input_size, hidden_size]))
 
-		# Recurrent weights
-		self.Rhh = np.random.randn(hidden_size, hidden_size) * 1
-		self.Rhr = np.random.randn(hidden_size, hidden_size) * 1
-		self.Rhz = np.random.randn(hidden_size, hidden_size) * 1
+		# # Recurrent weights
+		# self.Rhh = np.random.randn(hidden_size, hidden_size) * 1
+		# self.Rhr = np.random.randn(hidden_size, hidden_size) * 1
+		# self.Rhz = np.random.randn(hidden_size, hidden_size) * 1
 
-		# Biases
-		self.bh = np.zeros((hidden_size, 1))
-		self.br = np.zeros((hidden_size, 1))
-		self.bz = np.zeros((hidden_size, 1))
+		# # Biases
+		# self.bh = np.zeros((hidden_size, 1))
+		# self.br = np.zeros((hidden_size, 1))
+		# self.bz = np.zeros((hidden_size, 1))
 
-		# Weight from hidden layer to output layer
-		self.Why = np.random.randn(output_size, hidden_size) * 1
+		# # Weight from hidden layer to output layer
+		# self.Why = np.random.randn(output_size, hidden_size) * 1
 
-		self.weights = [self.Wxh, self.Wxr, self.Wxz, self.Rhh, self.Rhr, self.Rhz,
-						self.bh, self.br, self.bz, self.Why]
+		# self.weights = [self.Wxh, self.Wxr, self.Wxz, self.Rhh, self.Rhr, self.Rhz,
+		# 				self.bh, self.br, self.bz, self.Why]
+
+	def __graph__():
+		tf.reset_default_graph()
+
+		# inputs
+		xs = tf.placeholder(shape=[None, None], dtype=tf.int32)
+		ys = tf.placeholder(shape=[None], dtype=tf.int32)
+
+		# initial hidden state
+		init_state = tf.placeholder(shape=[num_layers, None, state_size],
+			dtype=tf.float32, name='initial_state')
+
+		# initializer
+		xav_init = tf.contrib.layers.xavier_initializer
+
+		# params
+		W = tf.get_variable('W',
+			shape=[num_layers, 3, self.state_size, self.state_size],
+			initializer=xav_init())
+		U = tf.get_variable('U',
+			shape=[num_layers, 3, self.state_size, self.state_size],
+			initializer=xav_init())
+		b = tf.get_variable('b',
+			shape=[num_layers, self.state_size],
+			initializer=tf.constant_initializer(0.))
 
 	def sigmoid(self, x):
 		''' The sigmoid activation function '''
