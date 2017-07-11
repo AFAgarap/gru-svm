@@ -2,8 +2,8 @@ import csv
 import os
 from os import walk
 
-path = '/home/darth/Documents/Adamson University/CS Research Project 1/Kyoto 2013 Dataset/Kyoto2016/2013/'
-csv_path = '/home/darth/Documents/Adamson University/CS Research Project 1/Kyoto 2013 Dataset/CSV'
+path = '/home/darth/Documents/Adamson University/CS Research Project/Kyoto 2013 Dataset/Kyoto2016/2013/'
+csv_path = '/home/darth/Documents/Adamson University/CS Research Project/Kyoto 2013 Dataset/CSV'
 
 data = []	# list to store the filenames under the subdirectories of the <path>
 csv_data = []	# list to store the converted CSV files
