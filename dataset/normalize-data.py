@@ -7,7 +7,12 @@ PATH = '/home/darth/Documents/Adamson University/CS Research Project/Kyoto 2013 
 data = []
 
 def main():
-	#
+	# list all CSV files under the PATH
+	data = list_files(path=PATH)
+	for datum in data:
+		# read CSV data
+		in_csv = csv.reader(open(datum, 'r'))
+
 	
 def list_files(path):
 	file_list = []
