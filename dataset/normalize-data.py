@@ -1,9 +1,19 @@
 import csv
 import os
+from os import walk
+
+PATH = '/home/darth/Documents/Adamson University/CS Research Project/Kyoto 2013 Dataset/CSV'
+
+data = []
 
 def main():
 	#
 	
+def list_files(path):
+	file_list = []
+	for (dirpath, dirnames, filenames) in walk(path):
+		file_list.extend(os.path.join(dirpath, filename) for filename in filenames)
+	return file_list
 
 def linear_scale(min, max, x):
 	'''Scales integer values [min, max] -> [0.0, 1.0]'''
