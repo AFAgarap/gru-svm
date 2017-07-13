@@ -12,14 +12,11 @@ def main():
 	# create empty df, where dfs shall be appended
 	data = pd.DataFrame(dtype=str)
 
-	# for file in files:
-	for index in range(len(files)):
-		print('{}'.format(index), end=' ')
-		data = data.append(pd.read_csv(filepath_or_buffer=files[index], header=None, na_values=['--']))
-		print()
+	# append the dfs from each file to the data df
+	for file in files:
+		data = data.append(pd.read_csv(filepath_or_buffer=file, header=None, engine='python'))
 	
-	for index in range(0, 47):
-		print(data.iloc[index])
+	print(data.describe())
 
 def list_files(path):
 	file_list = []
