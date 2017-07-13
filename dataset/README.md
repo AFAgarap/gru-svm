@@ -18,7 +18,8 @@ For the GRU-SVM computational model to utilize the dataset, it must be normalize
 
 The data summary using `df.describe()` of `pandas` is an aid for deciding which values in the dataset must be standardized. The inquiry I wrote regarding it may be found [here](https://stats.stackexchange.com/questions/291081/standardization-or-normalization), while the script I used for getting the data summary may be found [here](pandas-describe.py). The data summary is as follows:
 
-``
+```
+
                  0             2             3             4             5   \
 count  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06   
 mean   5.629711e+00  7.620859e+03  8.519262e+03  1.819146e+00  2.604244e-01   
@@ -28,6 +29,7 @@ min    0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
 50%    2.866777e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00   
 75%    3.419435e+00  1.280000e+02  2.090000e+02  1.000000e+00  5.000000e-01   
 max    8.097288e+04  2.133443e+09  2.116371e+09  1.000000e+02  1.000000e+00   
+
 
                  6             7             8             9             10  \
 count  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06   
@@ -39,6 +41,7 @@ min    0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
 75%    0.000000e+00  9.500000e-01  5.000000e+00  5.000000e+01  0.000000e+00   
 max    1.000000e+00  1.000000e+00  1.000000e+02  1.000000e+02  1.000000e+00   
 
+
                  11            12            17            19            21  
 count  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06  4.656124e+06  
 mean   1.405558e-01  2.122936e-01 -3.552655e-01  2.292569e+04  1.648552e+03  
@@ -48,4 +51,7 @@ min    0.000000e+00  0.000000e+00 -2.000000e+00  0.000000e+00  0.000000e+00
 50%    0.000000e+00  0.000000e+00 -1.000000e+00  6.000000e+03  8.000000e+01  
 75%    0.000000e+00  0.000000e+00  1.000000e+00  4.522200e+04  4.450000e+02  
 max    1.000000e+00  1.000000e+00  1.000000e+00  6.553500e+04  6.553500e+04 
-``
+
+```
+
+The values that belong to the missing indices `[1], [13-16], [18], [20], [22-23]` are either symbolic features or boolean feature or mixed. Index `[22]`, however, can be fixed to be standardized as well since it's the `start_time` feature. I intend to fix this.
