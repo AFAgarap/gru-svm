@@ -20,13 +20,9 @@ def list_files(path):
 		file_list.extend(os.path.join(dirpath, filename) for filename in filenames)
 	return file_list
 
-def linear_scale(min, max, x):
+def feature_scale(x):
 	'''Scales integer values [min, max] -> [0.0, 1.0]'''
-	if (x >= min and x <= max):
-		scaled_value = (((1.0 - 0.0) * (x - min)) / (max - min))
-	else:
-		scaled_value = -1
-	return scaled_value
+	return [ (x_i - min(x)) / (max(x) - min(x)) for x_i in x ]
 
 def scale_boolean_values(value):
 	'''Scales the supposed boolean values in the dataset'''
@@ -47,6 +43,13 @@ def convert_time_to_integer(time):
 	h, m, s = map(int, time.split(':'))
 	parsed_time = h + (m * (1 / 60)) + (s * (1 / 3600))
 	return parsed_time
+
+def standardize(x):
+	'''Method for normalizing using Student's t-statistic'''
+	mean = sum(x) / len(x)
+	std_dev = (1 / len(x) * sum([ (x_i - mean) ** 2 for x_i in x] )) ** 0.5
+	z_score = [ (x_i - mean) / std_dev for x_i in x ]
+	return z_score
 
 if __name__ == '__main__':
 	main()
