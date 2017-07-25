@@ -35,7 +35,7 @@ def main():
 	files = list_files(path=PATH)
 
 	# create empty df, where dfs shall be appended
-	df = pd.DataFrame(dtype=str)
+	df = pd.DataFrame()
 
 	# append the dfs from each file to the data df
 	for file in files:
