@@ -1,37 +1,27 @@
+import argparse
+import data
 import numpy as np
+import os
 import tensorflow as tf
 
-def main():
+TRAIN_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train'
+TEST_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
 
-	# the GRU model
-	cell = tf.contrib.rnn.GRUCell(CELLSIZE)
+def parse_args():
+	parser = argparse.ArgumentParser(description='GRU-SVM Model for Intrusion Detection, built with tf.scan')
+	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument('-g', '--test', action='store_true',
+		help='test train model')
+	group.add_argument('-t', '--train', action='store_true',
+		help='train model')
+	args = vars(parser.parse_args())
+	return args
 
-	mcell = tf.contrib.rnn.MultiRNNCell([cell] * NLAYERS, state_is_tuple=False)
+if __name__ == '__main__':
+	args = parse_args()
 
-	Hr, H = tf.nn.dynamic_rnn(mcell, X, initial_state=Hin)
-
-	# the SVM classifier
-	
-	# Weights that inform how each feature affect the classification
-	W = tf.Variable(tf.zeros([num_features, 1]))
-	b = tf.Variable(tf.zeros([1]))
-	y_raw = tf.matmul(x, W) + b
-
-	# Optimization
-	regularization_loss = 0.5 * tf.reduce_sum(tf.square(W))
-	hinge_loss = tf.reduce_sum(tf.maximum(tf.zeros([BATCH_SIZE, 1]), 1 - y * y_raw))
-	svm_loss = regularization_loss + svmC * hinge_loss;
-	train_step = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(svm_loss)
-
-	# Evaluation
-	predicted_class = tf.sign(y_raw)
-	correct_prediction = tf.equal(y, predicted_class)
-	accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
-
-	# Create a local session to run this computation
-	with tf.Session() as sess:
-
-		tf.initialize_all_variables().run()
-
-		# Iterate and train
-		for step in range(num_epochs * train_size // BATCH_SIZE):
+	if args['train']:
+		data = data.load_data(TRAIN_PATH)
+		
+	elif args['test']:
+		print('test')
