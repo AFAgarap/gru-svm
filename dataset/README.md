@@ -5,6 +5,8 @@
 
 The [traffic data](http://www.takakura.com/Kyoto_data/ext_old_data201704/) to be used for the training and evaluation of the proposed GRU-SVM model is from the honeypot systems of Kyoto University. You may read the document describing the data features [here](http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf).
 
+The dataset contains logs for 360 days of the year 2013. Only the logs for the following dates are non-existing: (1) March 2-4, and (2) October 13-14 -- totalling to 5 days.
+
 ### Data Pre-processing ###
 
 For the GRU-SVM computational model to utilize the dataset, it must be normalized first. That is, to scale or index non-integer values to a format which can be read by the neural network. Based from [this study](http://scholarworks.rit.edu/cgi/viewcontent.cgi?article=9241&context=theses), the pre-processing will be as follows:
