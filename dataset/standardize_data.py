@@ -9,7 +9,7 @@ PATH = '/home/darth/Desktop/pandas/train/5'
 # destination path of standardized dataset
 WRITE_PATH = '/home/darth/Desktop/preprocessed/train/5'
 # number of splits for the dataset
-NUM_CHUNKS = 5
+NUM_CHUNKS = 4
 
 # column names of 24 features
 col_names = ['duration', 'service', 'src_bytes', 'dest_bytes', 'count', 'same_srv_rate',
@@ -53,6 +53,11 @@ def main():
 	df['malware_detection'] = df['malware_detection'].apply(lambda malware_detection : 1 if malware_detection != '0' else 0)
 	df['ashula_detection'] = df['ashula_detection'].apply(lambda ashula_detection : 1 if ashula_detection != '0' else 0)
 	df['ids_detection'] = df['ids_detection'].apply(lambda ids_detection : 1 if ids_detection != '0' else 0)
+
+	# label indicates there is an attack if
+	# it is either -1 or -2, otherwise 1
+	# replace -1 & -2 with 1, and 1 with 0
+	df['label'] = df['label'].apply(lambda label : 1 if label == -1 or label == -2 else 0)
 
 	# convert time to continuous data
 	df['start_time'] = df['start_time'].apply(lambda time: int(time.split(':')[0]) +
