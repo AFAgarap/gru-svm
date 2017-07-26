@@ -9,12 +9,64 @@ The [traffic data](http://www.takakura.com/Kyoto_data/ext_old_data201704/) to be
 
 For the GRU-SVM computational model to utilize the dataset, it must be normalized first. That is, to scale or index non-integer values to a format which can be read by the neural network. Based from [this study](http://scholarworks.rit.edu/cgi/viewcontent.cgi?article=9241&context=theses), the pre-processing will be as follows:
 
-* Split the dataset into multiple files, separated which pertains to (1) logs with an attack detected, and (2) logs with no attack detected,
+* Split the dataset into multiple files, separated which pertains to (1) logs with detected attack(s), and (2) logs with no detected attack(s).
 * Map symbolic features like `service`, `flag`, and `protocol` to `[0, n-1]` where n is the number of symbols in a feature.
 * Linear scaling to `[0.0, 1.0]` of integer values like `duration`, `src_bytes`, `dest_bytes`, `dst_host_count`, `dst_host_srv_count`, and `start_time`.
 * Boolean values and continuous values shall be left as is.
 
-Data normalization was done using [standardize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/standardize_data.py).
+Data normalization was done using [standardize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/standardize_data.py), while splitting of the dataset into two: (1) logs with detected attack(s), and (2) logs with no detected attack(s) was done using [categorize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/categorize_data.py). To check if the data pre-processing was successful, the normalization and categorization that is, the module [check_standardized_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/check_standardized_data.py) was used.
+
+Sample data with detected attack(s):
+
+```
+0 : example [ -3.66881303e-02   3.00000000e+00  -2.20432188e-02  -2.52959970e-03
+  -4.15846437e-01   8.17247152e-01   3.45117354e+00   1.87133086e+00
+  -9.11360681e-01   1.38428557e+00  -1.90726683e-01  -4.77430880e-01
+   2.23967052e+00   6.00000000e+00   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   3.08720000e+04  -9.29602027e-01   3.06000000e+02
+   7.55433226e+00   1.35430086e+00   2.00000000e+00], label 1.0
+1 : example [ -4.13453244e-02   3.00000000e+00  -2.64402162e-02  -2.52959970e-03
+  -6.23901546e-01  -1.28207588e+00  -3.01768869e-01   1.87133086e+00
+   4.71016735e-01   6.56612664e-02  -7.57413357e-02   2.05189323e+00
+   1.96527612e+00   6.00000000e+00   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   4.45600000e+04  -1.17409921e+00   2.12500000e+03
+  -7.04813078e-02   1.35434210e+00   1.00000000e+00], label 1.0
+2 : example [ -4.13453244e-02   3.00000000e+00  -2.64402162e-02  -2.52959970e-03
+  -6.23901546e-01  -1.28207588e+00  -3.01768869e-01   1.36253881e+00
+  -9.11360681e-01  -1.30678451e+00  -1.90726683e-01  -4.77430880e-01
+  -5.04273891e-01   6.00000000e+00   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   1.58530000e+04   5.96221209e-01   2.83000000e+03
+   1.88292623e+00   1.35434210e+00   1.00000000e+00], label 1.0
+```
+
+Sample data with no detected attack(s):
+
+```
+0 : example [ -2.43421942e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
+   6.24429166e-01   4.60362226e-01  -3.01768869e-01  -6.72629297e-01
+   8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
+  -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   3.27220000e+04   1.38504553e+00   6.64000000e+02
+  -1.78705454e-01   2.04480633e-01   1.00000000e+00], label 0.0
+1 : example [ -2.57230941e-02   9.00000000e+00   4.68075182e-03  -5.28765901e-04
+   2.08318934e-01   5.65328360e-01  -3.01768869e-01  -6.72629297e-01
+   8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
+  -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   3.27220000e+04   1.41305792e+00   6.64000000e+02
+  -1.78705454e-01   2.04521850e-01   1.00000000e+00], label 0.0
+2 : example [ -2.53630150e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
+   3.12346488e-01   5.86321592e-01  -3.01768869e-01  -6.72629297e-01
+   8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
+  -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
+   0.00000000e+00   3.27220000e+04   1.41508842e+00   6.64000000e+02
+  -1.78705454e-01   2.04521850e-01   1.00000000e+00], label 0.0
+```
+
+You may notice the labels for each state: `1` when there is a detected attack, and `0` when there is no detected attack. The labels were converted from `-1` and `-2` for detected attack(s) to `1`, and from `1` for no detected attack(s) to `0`. This was done in [standardize_data.py line #60](https://github.com/AFAgarap/gru-svm/blob/master/dataset/standardize_data.py#L60):
+
+```
+df['label'] = df['label'].apply(lambda label : 1 if label == -1 or label == -2 else 0)
+```
 
 ### Data Summary ###
 
