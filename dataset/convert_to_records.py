@@ -19,7 +19,7 @@ def _bytes_feature(value):
 def convert_to(dataset, name):
 	"""Converts a dataset to tfrecords"""
 
-	filename_queue = tf.train.string_input_producer(dataset)
+	filename_queue = tf.train.string_input_producer(dataset, num_epochs=1)
 
 	# TF reader
 	reader = tf.TextLineReader()
