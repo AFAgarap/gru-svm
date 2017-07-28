@@ -40,7 +40,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description='GRU-SVM Model for Intrusion Detection, built with tf.scan')
 	group = parser.add_mutually_exclusive_group(required=True)
 	group.add_argument('-g', '--test', action='store_true',
-		help='test train model')
+		help='test trained model')
 	group.add_argument('-t', '--train', action='store_true',
 		help='train model')
 	args = vars(parser.parse_args())
@@ -54,4 +54,4 @@ if __name__ == '__main__':
 		main(examples, labels, keys)
 
 	elif args['test']:
-		print('test')
+		examples, labels, keys = data.input_pipeline(path=TEST_PATH, num_epochs=1)
