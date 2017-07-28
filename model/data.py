@@ -3,12 +3,6 @@ from os import walk
 import pandas as pd
 import tensorflow as tf
 
-COL_NAMES = ['duration', 'service', 'src_bytes', 'dest_bytes', 'count', 'same_srv_rate',
-			'serror_rate', 'srv_serror_rate', 'dst_host_count', 'dst_host_srv_count',
-			'dst_host_same_src_port_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate',
-			'flag', 'ids_detection', 'malware_detection', 'ashula_detection', 'label', 'src_ip_add',
-			'src_port_num', 'dst_ip_add', 'dst_port_num', 'start_time', 'protocol']
-
 def file_len(filename):
 	with open(filename) as file:
 		for index, line in enumerate(file):
@@ -64,16 +58,3 @@ def input_pipeline(path, batch_size=10, num_epochs=None):
 		min_after_dequeue=min_after_dequeue)
 
 	return example_batch, label_batch, key_batch
-	
-	# with tf.Session(config=SESSION_CONFIG) as sess:
-	# 	coord = tf.train.Coordinator()
-	# 	threads = tf.train.start_queue_runners(coord=coord)
-
-	# 	try:
-	# 		while not coord.should_stop():
-
-	# 	except tf.errors.OutOfRangeError:
-	# 		print('EOF Reached.')
-	# 	finally:
-	# 		coord.request_stop()
-	# 	coord.join(threads)
