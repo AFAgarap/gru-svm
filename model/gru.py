@@ -52,6 +52,18 @@ class GRU(object):
 			shape=[num_layers, self.state_size],
 			initializer=tf.constant_initializer(0.))
 
+	def train(self, train_set, epochs=100):
+		with tf.Session() as sess:
+			sess.run(tf.global_variables_initializer())
+			train_loss = 0
+			try:
+				# train procedure
+			except KeyboardInterrupt:
+				print('Interrupted by user at {}'.format(index))
+
+			saver = tf.train.Saver()
+			saver.save(sess, )
+
 	def sigmoid(self, x):
 		''' The sigmoid activation function '''
 		sigmoid_val= 1 / (1 + np.exp(-x))
