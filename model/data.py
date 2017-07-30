@@ -19,6 +19,7 @@ from os import walk
 import pandas as pd
 import tensorflow as tf
 
+
 def file_len(filename):
 	'''Returns the number of lines in a file'''
 	with open(filename) as file:
@@ -62,19 +63,25 @@ def read_from_csv(filename_queue):
 
 	return features, label, key
 
-def input_pipeline(path, batch_size=10, num_epochs=None):
+def input_pipeline(path, batch_size, num_epochs=None):
 	'''Batches the data from the dataset'''
 
 	# create a list to store the filenames
 	files = list_files(path=path)
 
+	# extract filenames to a queue for input pipeline
 	filename_queue = tf.train.string_input_producer(files, num_epochs=1, shuffle=True)
 
+	# gets the data from CSV
 	example, label, key = read_from_csv(filename_queue)
 
+	# size of buffer to be randomly sampled
 	min_after_dequeue = 10 * batch_size
+
+	# maximum amount that will be prefetched
 	capacity = min_after_dequeue + 3 * batch_size
 
+	# create batches by randomly shuffling tensors
 	example_batch, label_batch, key_batch = tf.train.shuffle_batch(
 		[example, label, key], batch_size=batch_size, capacity=capacity,
 		min_after_dequeue=min_after_dequeue)
