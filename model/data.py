@@ -81,9 +81,8 @@ def input_pipeline(path, batch_size, num_epochs=None):
 	# maximum amount that will be prefetched
 	capacity = min_after_dequeue + 3 * batch_size
 
-	# create batches by randomly shuffling tensors
-	example_batch, label_batch, key_batch = tf.train.shuffle_batch(
-		[example, label, key], batch_size=batch_size, capacity=capacity,
-		min_after_dequeue=min_after_dequeue)
+	# create batches of tensors to return
+	example_batch, label_batch, key_batch = tf.train.batch(
+		[example, label, key], batch_size=batch_size, capacity=capacity)
 
 	return example_batch, label_batch, key_batch
