@@ -22,6 +22,8 @@ import tensorflow as tf
 PATH = '/home/darth/GitHub Projects/gru_svm/backup/5'
 column_names = sd.col_names
 cols_to_std = sd.cols_to_std
+cols_to_std.append('service')
+cols_to_std.append('flag')
 
 files = sd.list_files(path=PATH)
 df = pd.DataFrame()
