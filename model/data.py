@@ -43,7 +43,7 @@ def read_from_csv(filename_queue):
     reader = tf.TextLineReader()
 
     # default values, in case of empty columns
-    record_defaults = [[0.0] for x in range(24)]
+    record_defaults = [[0.0] for x in range(22)]
 
     # returns the next record from the CSV file
     key, value = reader.read(filename_queue)
@@ -52,21 +52,21 @@ def read_from_csv(filename_queue):
     duration, service, src_bytes, dest_bytes, count, same_srv_rate, \
     serror_rate, srv_serror_rate, dst_host_count, dst_host_srv_count, \
     dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate, \
-    flag, ids_detection, malware_detection, ashula_detection, label, src_ip_add, \
-    src_port_num, dst_ip_add, dst_port_num, start_time, protocol = \
+    flag, ids_detection, malware_detection, ashula_detection, label, \
+    src_port_num, dst_port_num, start_time, protocol = \
         tf.decode_csv(value, record_defaults=record_defaults)
 
     # group the features together
     features = tf.stack([duration, service, src_bytes, dest_bytes, count, same_srv_rate,
                          serror_rate, srv_serror_rate, dst_host_count, dst_host_srv_count,
                          dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate,
-                         flag, ids_detection, malware_detection, ashula_detection, src_ip_add,
-                         src_port_num, dst_ip_add, dst_port_num, start_time, protocol])
+                         flag, ids_detection, malware_detection, ashula_detection,
+                         src_port_num, dst_port_num, start_time, protocol])
     # Feature Importance
     # features = tf.stack([src_bytes, same_srv_rate,
-    # 					dst_host_count, dst_host_srv_count,
-    # 					dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate,
-    # 					dst_ip_add, dst_port_num, start_time, protocol])
+    #                   dst_host_count, dst_host_srv_count,
+    #                   dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate,
+    #                   dst_ip_add, dst_port_num, start_time, protocol])
     # features = tf.stack([dst_host_count, dst_host_srv_count, start_time])
 
     # return features, 1 if (label == 1) else -1, key
@@ -106,9 +106,6 @@ def one_hot_encode_data(data):
 
 def one_hot_encode_label(labels):
     """Returns the one-hot encoded labels"""
-
-    # create numpy array from pandas dataframe
-    labels = np.array(labels)
 
     # create array filled with zeros
     # shape [LENGTH, 2] for there are 2 classes
