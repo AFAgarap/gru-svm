@@ -98,6 +98,12 @@ def input_pipeline(path, batch_size, num_epochs=None):
     return example_batch, label_batch
 
 
+def one_hot_encode_data(data):
+    """Returns the one-hot encoded data"""
+    data_onehot = np.eye(10)[data.astype(int)]
+    return data_onehot
+
+
 def one_hot_encode_label(labels):
     """Returns the one-hot encoded labels"""
 
@@ -109,7 +115,7 @@ def one_hot_encode_label(labels):
     labels_onehot = np.zeros((labels.__len__(), 2))
 
     # fill the 'on' bits
-    labels_onehot[np.arange(labels.__len__()), labels] = 1
+    labels_onehot[np.arange(labels.__len__()), labels.astype(int)] = 1
 
     # for SVM, replace 0 with -1
     # since SVM classifies y {-1, +1}
