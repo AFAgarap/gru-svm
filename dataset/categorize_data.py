@@ -1,19 +1,37 @@
+# Copyright 2017 Abien Fred Agarap. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""
+Splits the dataset to (1) logs with recorded attack, (2) logs with no recorded attack
+"""
 import numpy as np
 import os
 import pandas as pd
 import standardize_data
 
 # path of the normalized data to categorize
-FILE_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/5'
+FILE_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
 
 # path where to save the data with 'under attack' sessions
-FILE_WITH_ATTACK = '/home/darth/GitHub Projects/gru_svm/dataset/train/5/attack'
+FILE_WITH_ATTACK = '/home/darth/GitHub Projects/gru_svm/dataset/test/attack'
 
 # path where to save the data with normal sessions
-FILE_WITH_NORMAL = '/home/darth/GitHub Projects/gru_svm/dataset/train/5/normal'
+FILE_WITH_NORMAL = '/home/darth/GitHub Projects/gru_svm/dataset/test/normal'
 
 # number of files to save
-NUM_CHUNKS = 4
+NUM_CHUNKS = 20
 
 # column names of the dataset (24 features)
 COL_NAMES = standardize_data.col_names
