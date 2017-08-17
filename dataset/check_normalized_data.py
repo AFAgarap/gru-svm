@@ -1,17 +1,30 @@
+# Copyright 2017 Abien Fred Agarap. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""Module for checking the normalized data."""
 import os
 import pandas as pd
 import tensorflow as tf
-import standardize_data
+from standardize_data import list_files
+from standardize_data import col_names
 
 # the path of the dataset to check
-PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/5/normal'
+PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test/normal'
 
 # list to contain the filenames in PATH
-files = []
-
-# append the files under PATH to the list files[]
-for dirpath, dirnames, filenames in os.walk(PATH):
-	files.extend(os.path.join(dirpath, filename) for filename in filenames)
+files = list_files(PATH)
 
 # TF queue to contain the list of files
 filename_queue = tf.train.string_input_producer(files)
@@ -53,7 +66,7 @@ df = pd.DataFrame()
 df_n = pd.DataFrame()
 
 for file in files:
-	df = df.append(pd.read_csv(filepath_or_buffer=file, names=standardize_data.col_names, engine='python'))
+	df = df.append(pd.read_csv(filepath_or_buffer=file, names=col_names, engine='python'))
 
 print('Done appending...')
 
