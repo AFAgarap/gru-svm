@@ -1,3 +1,19 @@
+# Copyright 2017 Abien Fred Agarap. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""Dataset normalization using standardization and indexing"""
 import numpy as np
 import pandas as pd
 import os
@@ -5,11 +21,11 @@ from os import walk
 from sklearn import preprocessing
 
 # path of the dataset to be standardized
-PATH = '/home/darth/Desktop/pandas/train/5'
+PATH = '/home/darth/Desktop/pandas/test'
 # destination path of standardized dataset
-WRITE_PATH = '/home/darth/Desktop/preprocessed/train/5'
+WRITE_PATH = '/home/darth/Desktop/preprocessed/test'
 # number of splits for the dataset
-NUM_CHUNKS = 4
+NUM_CHUNKS = 20
 
 # column names of 24 features
 col_names = ['duration', 'service', 'src_bytes', 'dest_bytes', 'count', 'same_srv_rate',
