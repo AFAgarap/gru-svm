@@ -32,12 +32,11 @@ df = pd.DataFrame()
 
 # append the filenames to the list
 for (dirpath, dirnames, filenames) in os.walk(PATH):
-	files.extend(os.path.join(dirpath, filename) for filename in filenames)
-	
+    files.extend(os.path.join(dirpath, filename) for filename in filenames)
 
 # append the data from files to df
 for file in files:
-	df = df.append(pd.read_csv(filepath_or_buffer=file, names=COL_NAMES, engine='python'))
+    df = df.append(pd.read_csv(filepath_or_buffer=file, names=COL_NAMES, engine='python'))
 
 # print the data summary
 print(df.describe())
