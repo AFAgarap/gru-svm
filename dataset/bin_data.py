@@ -20,9 +20,9 @@ import pandas as pd
 import standardize_data as sd
 import tensorflow as tf
 
-NUM_CHUNKS = 10
+NUM_CHUNKS = 10  # number of CSV files to save the data to
 PATH = '/home/darth/GitHub Projects/gru_svm/backup/5'
-WRITE_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/foo'
+WRITE_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/fooq'
 column_names = sd.col_names
 columns_to_save = list(column_names)
 columns_to_save.remove('dst_ip_add')
@@ -35,15 +35,22 @@ files = sd.list_files(path=PATH)
 df = pd.DataFrame()
 
 for file in files:
+    # append the data from CSV files to the dataframe
     df = df.append(pd.read_csv(filepath_or_buffer=file, names=column_names))
     print('appending : {}'.format(file))
 
+# remove dst_ip_add and src_ip_add features
 df = df.drop(labels=['dst_ip_add', 'src_ip_add'], axis=1)
 
 for index in range(len(cols_to_std)):
-    bins = np.linspace(df[cols_to_std[index]].min(), df[cols_to_std[index]].max(), 10)
-    df[cols_to_std[index]] = np.digitize(df[cols_to_std[index]], bins, right=True)
+    # bucket binning
+    # bins = np.linspace(df[cols_to_std[index]].min(), df[cols_to_std[index]].max(), 10)
+    # df[cols_to_std[index]] = np.digitize(df[cols_to_std[index]], bins, right=True)
+
+    # decile binning
+    df[cols_to_std[index]] = pd.qcut(df[cols_to_std[index]], 10, labels=False, duplicates='drop')
 
 for id, df_i in enumerate(np.array_split(df, NUM_CHUNKS)):
-	df_i.to_csv(path_or_buf=os.path.join(WRITE_PATH, '{id}.csv'.format(id=id)), columns=columns_to_save, header=None, index=False)
-	print('Saving CSV file : {path}'.format(path=os.path.join(WRITE_PATH, '{id}'.format(id=id))))
+    # split and save the dataframe to CSV files
+    df_i.to_csv(path_or_buf=os.path.join(WRITE_PATH, '{id}.csv'.format(id=id)), columns=columns_to_save, header=None, index=False)
+    print('Saving CSV file : {path}'.format(path=os.path.join(WRITE_PATH, '{id}'.format(id=id))))
