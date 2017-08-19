@@ -17,16 +17,8 @@
 import os
 import tensorflow as tf
 
-__version__ = '0.2'
+__version__ = '0.2.1'
 __author__ = 'Abien Fred Agarap'
-
-
-def file_len(filename):
-    """Returns the number of lines in a file"""
-    with open(filename) as file:
-        for index, line in enumerate(file):
-            pass
-    return index + 1
 
 
 def list_files(path):
@@ -38,13 +30,13 @@ def list_files(path):
 
 
 def read_from_csv(filename_queue):
-    """Returns decoded CSV file in form of [0] features, [1] label, and [2] key"""
+    """Returns decoded CSV file in form of [0] features, [1] label"""
 
     # TF reader
     reader = tf.TextLineReader()
 
     # default values, in case of empty columns
-    record_defaults = [[0.0] for x in range(22)]
+    record_defaults = [[0.0] for _ in range(22)]
 
     # returns the next record from the CSV file
     key, value = reader.read(filename_queue)
@@ -67,7 +59,7 @@ def read_from_csv(filename_queue):
     return features, label
 
 
-def input_pipeline(path, batch_size, num_classes, num_epochs=None):
+def input_pipeline(path, batch_size, num_classes, num_epochs):
     """
     Batches the data from the dataset,
     and returns one-hot encoded features and labels
