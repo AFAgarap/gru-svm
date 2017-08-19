@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Implementation of proposed GRU+SVM model for Intrusion Detection"""
+
+__version__ = '0.1.1'
+__author__ = 'Abien Fred Agarap'
+
 import data
 import math
 import numpy as np
@@ -21,25 +26,25 @@ import tensorflow as tf
 import time
 
 # hyper-parameters
-BATCH_SIZE = 256
-CELL_SIZE = 256
+BATCH_SIZE = 512
+CELL_SIZE = 512
 DROPOUT_P_KEEP = 0.8
-HM_EPOCHS = 3
+HM_EPOCHS = 2
 LEARNING_RATE = 0.001
 N_CLASSES = 2
-N_LAYERS = 3
 P_KEEP = 0.8
 SEQUENCE_LENGTH = 21
 SVM_C = 0.5
+
+GPU_OPTIONS = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 
 # tf.train.Saver() parameters
 CHECKPOINT_PATH = 'checkpoint/'
 MODEL_NAME = 'gru_svm'
 
-LOGS_PATH = 'logs/svm_vs_softmax/'
+LOGS_PATH = 'logs/test/'
 
-TRAIN_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/foo/train'
-TEST_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/foo/test'
+TRAIN_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train'
 
 
 def variable_summaries(var):
@@ -55,19 +60,22 @@ def variable_summaries(var):
 
 
 def main():
-    examples, labels = data.input_pipeline(path=TRAIN_PATH, batch_size=BATCH_SIZE, num_epochs=1)
+    examples, labels = data.input_pipeline(path=TRAIN_PATH,
+                                           batch_size=BATCH_SIZE,
+                                           num_classes=N_CLASSES,
+                                           num_epochs=HM_EPOCHS)
 
     learning_rate = tf.placeholder(tf.float32, name='learning_rate')
     p_keep = tf.placeholder(tf.float32, name='p_keep')
 
-    with tf.name_scope('input'):
+    with tf.name_scope('input') as input:
         # [BATCH_SIZE, SEQUENCE_LENGTH]
         x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
 
         # [BATCH_SIZE, SEQUENCE_LENGTH]
         y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
 
-    # [BATCH_SIZE, CELL_SIZE * N_LAYERS]
+    # [BATCH_SIZE, CELL_SIZE]
     state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
 
     cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
@@ -76,6 +84,8 @@ def main():
     # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
     # states: [BATCH_SIZE, CELL_SIZE]
     outputs, states = tf.nn.dynamic_rnn(drop_cell, x_input, initial_state=state, dtype=tf.float32)
+
+    states = tf.identity(states, name='H')
 
     with tf.name_scope('weights'):
         weight = tf.Variable(tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01), name='weight')
@@ -124,14 +134,23 @@ def main():
         os.mkdir(CHECKPOINT_PATH)
     saver = tf.train.Saver(max_to_keep=1000)
 
+    # initialize H (current_state) with values of zeros
     current_state = np.zeros([BATCH_SIZE, CELL_SIZE])
+
+    # variable initializer
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
+    # merge all the summaries collected from TF graph
     merged = tf.summary.merge_all()
 
+    # get the time in seconds since the Epoch
     timestamp = str(math.trunc(time.time()))
-    writer = tf.summary.FileWriter(LOGS_PATH + timestamp, graph=tf.get_default_graph())
+
+    # create an event file to contain the TF graph summaries
+    writer = tf.summary.FileWriter(LOGS_PATH + timestamp + '-training', graph=tf.get_default_graph())
 
     with tf.Session() as sess:
+
         sess.run(init_op)
 
         checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
@@ -142,37 +161,36 @@ def main():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        for epoch in range(HM_EPOCHS):
-            epoch_loss = 0
-            for index in range(BATCH_SIZE):
+        try:
+            step = 0
+            while not coord.should_stop():
                 example_batch, label_batch = sess.run([examples, labels])
-
-                example_batch = data.one_hot_encode_data(example_batch)
-                label_batch = data.one_hot_encode_label(label_batch)
 
                 feed_dict = {x_input: example_batch, y_input: label_batch, state: current_state,
                              learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
 
-                summary, _, cost_, next_state = sess.run([merged, optimizer, cost, states], feed_dict=feed_dict)
+                summary, _, epoch_loss, next_state = sess.run([merged, optimizer, cost, states], feed_dict=feed_dict)
 
                 accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
 
-                epoch_loss += cost_
-
                 current_state = next_state
 
-            writer.add_summary(summary, epoch)
-            saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=epoch)
+                if step % 100 == 0:
+                    print('step [{}] loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
+                    writer.add_summary(summary, step)
+                    saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
 
-            print('[{}] loss : {}, accuracy : {}'.format(epoch, epoch_loss, accuracy_))
+                step += 1
+        except tf.errors.OutOfRangeError:
+            print('EOF -- training done at step {}'.format(step))
+        finally:
+            writer.close()
+            coord.request_stop()
 
-        writer.close()
-
-        coord.request_stop()
         coord.join(threads)
 
         saver = tf.train.Saver()
-        saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=epoch)
+        saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
 
         # test_data, test_labels = data.load_test_data_and_labels(path=TEST_PATH)
 
