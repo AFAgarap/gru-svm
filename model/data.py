@@ -14,10 +14,11 @@
 # ==============================================================================
 
 """Makes batches of examples for training or evaluation"""
-import numpy as np
-from os.path import join
-from os import walk
+import os
 import tensorflow as tf
+
+__version__ = '0.2'
+__author__ = 'Abien Fred Agarap'
 
 
 def file_len(filename):
@@ -31,8 +32,8 @@ def file_len(filename):
 def list_files(path):
     """Returns the list of files present in the path"""
     file_list = []
-    for (dirpath, dirnames, filenames) in walk(path):
-        file_list.extend(join(dirpath, filename) for filename in filenames)
+    for (dir_path, dir_names, file_names) in os.walk(path):
+        file_list.extend(os.path.join(dir_path, file_name) for file_name in file_names)
     return file_list
 
 
@@ -50,10 +51,10 @@ def read_from_csv(filename_queue):
 
     # Get the columns from the decoded CSV file
     duration, service, src_bytes, dest_bytes, count, same_srv_rate, \
-    serror_rate, srv_serror_rate, dst_host_count, dst_host_srv_count, \
-    dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate, \
-    flag, ids_detection, malware_detection, ashula_detection, label, \
-    src_port_num, dst_port_num, start_time, protocol = \
+        serror_rate, srv_serror_rate, dst_host_count, dst_host_srv_count, \
+        dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate, \
+        flag, ids_detection, malware_detection, ashula_detection, label, \
+        src_port_num, dst_port_num, start_time, protocol = \
         tf.decode_csv(value, record_defaults=record_defaults)
 
     # group the features together
@@ -62,25 +63,21 @@ def read_from_csv(filename_queue):
                          dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate,
                          flag, ids_detection, malware_detection, ashula_detection,
                          src_port_num, dst_port_num, start_time, protocol])
-    # Feature Importance
-    # features = tf.stack([src_bytes, same_srv_rate,
-    #                   dst_host_count, dst_host_srv_count,
-    #                   dst_host_same_src_port_rate, dst_host_serror_rate, dst_host_srv_serror_rate,
-    #                   dst_ip_add, dst_port_num, start_time, protocol])
-    # features = tf.stack([dst_host_count, dst_host_srv_count, start_time])
 
-    # return features, 1 if (label == 1) else -1, key
     return features, label
 
 
-def input_pipeline(path, batch_size, num_epochs=None):
-    """Batches the data from the dataset"""
+def input_pipeline(path, batch_size, num_classes, num_epochs=None):
+    """
+    Batches the data from the dataset,
+    and returns one-hot encoded features and labels
+    """
 
-    # create a list to store the filenames
+    # create a list to store the file names
     files = list_files(path=path)
 
-    # extract filenames to a queue for input pipeline
-    filename_queue = tf.train.string_input_producer(files, num_epochs=1, shuffle=True)
+    # extract file names to a queue for input pipeline
+    filename_queue = tf.train.string_input_producer(files, num_epochs=num_epochs, shuffle=True)
 
     # gets the data from CSV
     example, label = read_from_csv(filename_queue)
@@ -92,30 +89,13 @@ def input_pipeline(path, batch_size, num_epochs=None):
     capacity = min_after_dequeue + 3 * batch_size
 
     # create batches of tensors to return
-    example_batch, label_batch = tf.train.batch(
-        [example, label], batch_size=batch_size, capacity=capacity)
+    example_batch, label_batch = tf.train.shuffle_batch(
+        [example, label], batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
-    return example_batch, label_batch
+    # one-hot encode the example_batch with depth of 10
+    example_batch_onehot = tf.one_hot(tf.cast(example_batch, tf.uint8), 10, 1.0, 0.0)
 
+    # one-hot encode the label_batch with depth of num_classes
+    label_batch_onehot = tf.one_hot(tf.cast(label_batch, tf.uint8), num_classes, 1.0, -1.0)
 
-def one_hot_encode_data(data):
-    """Returns the one-hot encoded data"""
-    data_onehot = np.eye(10)[data.astype(int)]
-    return data_onehot
-
-
-def one_hot_encode_label(labels):
-    """Returns the one-hot encoded labels"""
-
-    # create array filled with zeros
-    # shape [LENGTH, 2] for there are 2 classes
-    labels_onehot = np.zeros((labels.__len__(), 2))
-
-    # fill the 'on' bits
-    labels_onehot[np.arange(labels.__len__()), labels.astype(int)] = 1
-
-    # for SVM, replace 0 with -1
-    # since SVM classifies y {-1, +1}
-    labels_onehot[labels_onehot == 0] = -1
-
-    return labels_onehot
+    return example_batch_onehot, label_batch_onehot
