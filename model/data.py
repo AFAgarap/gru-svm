@@ -84,10 +84,13 @@ def input_pipeline(path, batch_size, num_classes, num_epochs):
     example_batch, label_batch = tf.train.shuffle_batch(
         [example, label], batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
 
+    example_batch = tf.identity(example_batch, name='example_batch')  # provide a name for tensor
+    label_batch = tf.identity(label_batch, name='label_batch')  # provide a name for tensor
+
     # one-hot encode the example_batch with depth of 10
-    example_batch_onehot = tf.one_hot(tf.cast(example_batch, tf.uint8), 10, 1.0, 0.0)
+    example_batch_onehot = tf.one_hot(tf.cast(example_batch, tf.uint8), 10, 1.0, 0.0, name='example_batch_onehot')
 
     # one-hot encode the label_batch with depth of num_classes
-    label_batch_onehot = tf.one_hot(tf.cast(label_batch, tf.uint8), num_classes, 1.0, -1.0)
+    label_batch_onehot = tf.one_hot(tf.cast(label_batch, tf.uint8), num_classes, 1.0, -1.0, name='label_batch_onehot')
 
     return example_batch_onehot, label_batch_onehot
