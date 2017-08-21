@@ -15,7 +15,7 @@
 
 """Implementation of proposed GRU+SVM model for Intrusion Detection"""
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __author__ = 'Abien Fred Agarap'
 
 import data
@@ -59,17 +59,8 @@ def variable_summaries(var):
         tf.summary.histogram('histogram', var)
 
 
-def main():
-    train_examples, train_labels = data.input_pipeline(path=TRAIN_PATH, batch_size=BATCH_SIZE,
-                                                       num_classes=N_CLASSES,
-                                                       num_epochs=HM_EPOCHS)
-
-    test_examples, test_labels = data.input_pipeline(path=TEST_PATH, batch_size=BATCH_SIZE,
-                                                     num_classes=N_CLASSES, num_epochs=1)
-
-    learning_rate = tf.placeholder(tf.float32, name='learning_rate')
-    p_keep = tf.placeholder(tf.float32, name='p_keep')
-
+def train_model(train_examples, train_labels, test_examples, test_labels):
+    """Implementation of GRU model"""
     with tf.name_scope('input'):
         # [BATCH_SIZE, SEQUENCE_LENGTH]
         x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
@@ -79,7 +70,9 @@ def main():
 
     # [BATCH_SIZE, CELL_SIZE]
     state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
-    tf.add_to_collection('initial_state', state)
+
+    learning_rate = tf.placeholder(tf.float32, name='learning_rate')
+    p_keep = tf.placeholder(tf.float32, name='p_keep')
 
     cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
     drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
@@ -90,51 +83,37 @@ def main():
 
     states = tf.identity(states, name='H')
 
-    with tf.name_scope('weights'):
-        weight = tf.get_variable('weight', initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
-        variable_summaries(weight)
-    with tf.name_scope('biases'):
-        bias = tf.get_variable('bias', initializer=tf.constant(0.1, shape=[N_CLASSES]))
-        variable_summaries(bias)
+    with tf.name_scope('final_training_ops'):
+        with tf.name_scope('weights'):
+            weight = tf.get_variable('weights', initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
+            variable_summaries(weight)
+        with tf.name_scope('biases'):
+            bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
+            variable_summaries(bias)
+        hf = tf.transpose(outputs, [1, 0, 2])
+        last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
+        with tf.name_scope('Wx_plus_b'):
+            output = tf.matmul(last, weight) + bias
+            tf.summary.histogram('pre-activations', output)
 
-    hf = tf.transpose(outputs, [1, 0, 2])
-    last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
-
-    with tf.name_scope('Wx_plus_b'):
-        output = tf.matmul(last, weight) + bias
-        tf.summary.histogram('pre-activations', output)
-
-    # svm layer
-    with tf.name_scope('loss'):
+    with tf.name_scope('svm'):
         regularization_loss = 0.5 * tf.reduce_sum(tf.square(weight))
         hinge_loss = tf.reduce_sum(tf.square(tf.maximum(tf.zeros([BATCH_SIZE, N_CLASSES]), 1 - y_input * output)))
         with tf.name_scope('loss'):
-            cost = regularization_loss + SVM_C * hinge_loss
-    tf.summary.scalar('loss', cost)
+            loss = regularization_loss + SVM_C * hinge_loss
+    tf.summary.scalar('loss', loss)
 
-    # softmax layer
-    # with tf.name_scope('loss'):
-    #     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_input))
-    # tf.summary.scalar('loss', cost)
+    with tf.name_scope('train'):
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-
-    # accuracy for svm
     with tf.name_scope('accuracy'):
         predicted_class = tf.sign(output)
+        predicted_class = tf.identity(predicted_class, name='prediction')
         with tf.name_scope('correct_prediction'):
             correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_input, 1))
         with tf.name_scope('accuracy'):
             accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
     tf.summary.scalar('accuracy', accuracy)
-
-    # accuracy for softmax
-    # with tf.name_scope('accuracy'):
-    #     with tf.name_scope('correct_prediction'):
-    #         correct = tf.equal(tf.argmax(output, 1), tf.argmax(y_input, 1))
-    #     with tf.name_scope('accuracy'):
-    #         accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-    # tf.summary.scalar('accuracy', accuracy)
 
     if not os.path.exists(CHECKPOINT_PATH):
         os.mkdir(CHECKPOINT_PATH)
@@ -167,10 +146,8 @@ def main():
 
         if checkpoint and checkpoint.model_checkpoint_path:
             saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
-            # saver.restore(sess, checkpoint.model_checkpoint_path)
             saver.restore(sess, tf.train.latest_checkpoint(CHECKPOINT_PATH))
-            w_ = sess.run(weight)
-            print(w_, w_.shape)
+            print([n.name for n in tf.get_default_graph().as_graph_def().node])
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
@@ -183,7 +160,8 @@ def main():
                 feed_dict = {x_input: train_example_batch, y_input: train_label_batch, state: current_state,
                              learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
 
-                summary, _, epoch_loss, next_state = sess.run([merged, optimizer, cost, states], feed_dict=feed_dict)
+                summary, _, epoch_loss, next_state = sess.run([merged, optimizer, loss, states],
+                                                              feed_dict=feed_dict)
 
                 accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
 
@@ -200,7 +178,7 @@ def main():
                     feed_dict = {x_input: test_example_batch, y_input: test_label_batch,
                                  state: np.zeros([BATCH_SIZE, CELL_SIZE]), p_keep: 1.0}
 
-                    summary, test_loss, test_accuracy = sess.run([merged, cost, accuracy], feed_dict=feed_dict)
+                    summary, test_loss, test_accuracy = sess.run([merged, loss, accuracy], feed_dict=feed_dict)
 
                     print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
 
@@ -211,6 +189,10 @@ def main():
             print('EOF -- training done at step {}'.format(step))
         except KeyboardInterrupt:
             print('Training interrupted at {}'.format(step))
+            # prediction_ = sess.run(predicted_class, feed_dict={x_input: test_example_batch,
+            #                                                    state: np.zeros([BATCH_SIZE, CELL_SIZE]),
+            #                                                    p_keep: 1.0})
+            # print(prediction_)
         finally:
             train_writer.close()
             validation_writer.close()
@@ -220,6 +202,18 @@ def main():
 
         saver = tf.train.Saver()
         saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
+
+
+def main():
+    train_examples, train_labels = data.input_pipeline(path=TRAIN_PATH, batch_size=BATCH_SIZE,
+                                                       num_classes=N_CLASSES,
+                                                       num_epochs=HM_EPOCHS)
+
+    test_examples, test_labels = data.input_pipeline(path=TEST_PATH, batch_size=BATCH_SIZE,
+                                                     num_classes=N_CLASSES, num_epochs=1)
+
+    train_model(train_examples=train_examples, train_labels=train_labels,
+                test_examples=test_examples, test_labels=test_labels)
 
 
 if __name__ == '__main__':
