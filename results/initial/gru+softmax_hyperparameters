@@ -1,0 +1,14 @@
+GRU+Softmax
+
+BATCH_SIZE = 256
+CELL_SIZE = 256
+DROPOUT_P_KEEP = 0.8
+HM_EPOCHS = 2
+LEARNING_RATE = 1e-6
+N_CLASSES = 2
+SEQUENCE_LENGTH = 21
+
+weights = tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01)
+bias = tf.constant(0.1, shape=[N_CLASSES])
+
+AdamOptimizer()

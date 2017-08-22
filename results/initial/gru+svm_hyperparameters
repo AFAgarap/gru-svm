@@ -1,0 +1,14 @@
+GRU+SVM
+
+BATCH_SIZE = 256
+CELL_SIZE = 256
+DROPOUT_P_KEEP = 0.85
+HM_EPOCHS = 2
+LEARNING_RATE = 1e-5
+N_CLASSES = 2
+SEQUENCE_LENGTH = 21
+SVM_C = 0.5
+
+weights = tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01)
+bias = tf.constant(0.1, shape=[N_CLASSES])
+AdamOptimizer()
