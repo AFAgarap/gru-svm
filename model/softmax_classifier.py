@@ -15,9 +15,10 @@
 
 """Classifier program based on the GRU+Softmax model"""
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Abien Fred Agarap'
 
+import argparse
 import numpy as np
 import tensorflow as tf
 
@@ -27,15 +28,11 @@ DROPOUT_P_KEEP = 1.0
 NUM_BIN = 10
 NUM_CLASSES = 2
 
-CHECKPOINT_PATH = '/home/darth/GitHub Projects/gru_svm/model/checkpoint/gru+softmax/'
 
-TEST_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
-
-
-def predict():
+def predict(test_path, checkpoint_path):
     """Classifies the data whether there is an attack or none"""
 
-    test_file = TEST_PATH + '/24.csv'
+    test_file = test_path + '/24.csv'
     # load the CSV file to numpy array
     test_example_batch = np.genfromtxt(test_file, delimiter=',')
 
@@ -63,12 +60,12 @@ def predict():
     with tf.Session() as sess:
         sess.run(init_op)
         
-        checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
+        checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
         
         if checkpoint and checkpoint.model_checkpoint_path:
             saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
-            saver.restore(sess, tf.train.latest_checkpoint(CHECKPOINT_PATH))
-            print('Loaded model from {}'.format(tf.train.latest_checkpoint(CHECKPOINT_PATH)))
+            saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+            print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
 
         try:
             for _ in range(1):
@@ -104,5 +101,19 @@ def predict():
         except KeyboardInterrupt:
             print('KeyboardInterrupt')
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='GRU+Softmax Classifier')
+    group = parser.add_argument_group('Arguments')
+    group.add_argument('-d', '--dataset', required=True, type=str,
+                       help='path of the dataset to be classified')
+    group.add_argument('-m', '--model', required=True, type=str,
+                       help='path of the trained model')
+    arguments = parser.parse_args()
+    return arguments
+
+
 if __name__ == '__main__':
-    predict()
+    args = parse_args()
+
+    predict(args.dataset, args.model)
