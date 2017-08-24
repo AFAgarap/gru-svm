@@ -15,7 +15,7 @@
 
 """Classifier program based on the GRU+Softmax model"""
 
-__version__ = '0.3.0'
+__version__ = '0.3.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -76,7 +76,7 @@ def predict(test_path, checkpoint_path):
                 x_onehot = sess.run(example_onehot)
 
                 # one-hot encode labels according to NUM_CLASSES
-                label_onehot = tf.one_hot(test_label_batch[2000:2256], NUM_CLASSES, 1.0, -1.0)
+                label_onehot = tf.one_hot(test_label_batch[2000:2256], NUM_CLASSES, 1.0, 0.0)
                 y_onehot = sess.run(label_onehot)
 
                 # dictionary for input values for the tensors
@@ -87,7 +87,6 @@ def predict(test_path, checkpoint_path):
                 # get the tensor for classification
                 softmax_tensor = sess.graph.get_tensor_by_name('accuracy/Softmax:0')
                 predictions = sess.run(softmax_tensor, feed_dict=feed_dict)
-                print('Predictions : {}'.format(predictions))
 
                 # add key, value pair for labels
                 feed_dict['input/y_input:0'] = y_onehot
@@ -95,7 +94,17 @@ def predict(test_path, checkpoint_path):
                 # get the tensor for calculating the classification accuracy
                 accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
                 accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
+
+                # concatenate the actual labels to the predicted labels
+                prediction_and_actual = np.concatenate((predictions, y_onehot), axis=1)
+
+                # print the full array, may be set to np.nan
+                np.set_printoptions(threshold=np.inf)
+                print(prediction_and_actual)
                 print('Accuracy : {}'.format(accuracy))
+
+                # save the full array
+                np.savetxt('softmax_results.csv', X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
