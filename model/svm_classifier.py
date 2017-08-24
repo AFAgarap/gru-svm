@@ -15,7 +15,7 @@
 
 """Classifier program based on the GRU+SVM model"""
 
-__version__ = '0.3.0'
+__version__ = '0.3.2'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -89,7 +89,6 @@ def predict(test_path, checkpoint_path):
                 # get the tensor for classification
                 prediction_tensor = sess.graph.get_tensor_by_name('accuracy/prediction:0')
                 predictions = sess.run(prediction_tensor, feed_dict=feed_dict)
-                print('Predictions : {}'.format(predictions))
 
                 # add key, value pair for labels
                 feed_dict['input/y_input:0'] = y_onehot
@@ -97,7 +96,17 @@ def predict(test_path, checkpoint_path):
                 # get the tensor for calculating the classification accuracy
                 accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
                 accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
+
+                # concatenate the actual labels to the predicted labels
+                prediction_and_actual = np.concatenate((predictions, y_onehot), axis=1)
+
+                # print the full array, may be set to np.nan
+                np.set_printoptions(threshold=np.inf)
+                print(prediction_and_actual)
                 print('Accuracy : {}'.format(accuracy))
+
+                # save the full array
+                np.savetxt('svm_results.csv', X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
