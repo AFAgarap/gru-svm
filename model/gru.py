@@ -15,9 +15,10 @@
 
 """Implementation of GRU+Softmax model for Intrusion Detection"""
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Abien Fred Agarap'
 
+import argparse
 import data
 import numpy as np
 import os
@@ -27,20 +28,19 @@ import time
 # hyper-parameters
 BATCH_SIZE = 256
 CELL_SIZE = 256
-DROPOUT_P_KEEP = 0.85
+DROPOUT_P_KEEP = 0.8
 HM_EPOCHS = 2
-LEARNING_RATE = 1e-5
+LEARNING_RATE = 1e-6
 N_CLASSES = 2
-P_KEEP = 0.8
 SEQUENCE_LENGTH = 21
 
 GPU_OPTIONS = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 
 # tf.train.Saver() parameters
-CHECKPOINT_PATH = 'checkpoint/'
+CHECKPOINT_PATH = 'checkpoint/test_softmax/'
 MODEL_NAME = 'gru_softmax.ckpt'
 
-LOGS_PATH = 'logs/gru+softmax/'
+LOGS_PATH = 'logs/test_softmax/'
 
 TRAIN_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train'
 TEST_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
@@ -146,25 +146,24 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
             step = 0
             while not coord.should_stop():
                 train_example_batch, train_label_batch = sess.run([train_examples, train_labels])
-
+                train_label_batch[train_label_batch == -1] = 0
                 feed_dict = {x_input: train_example_batch, y_input: train_label_batch, state: current_state,
                              learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
 
                 summary, _, epoch_loss, next_state = sess.run([merged, optimizer, loss, states],
                                                               feed_dict=feed_dict)
 
-                accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
-
-                current_state = next_state
-
+                # Display training accuracy every 100 steps and at step 0
                 if step % 100 == 0:
+                    accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
                     print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
                     train_writer.add_summary(summary, step)
                     saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
 
+                # Validate training every 100 steps
                 if step % 100 == 0 and step > 0:
                     test_example_batch, test_label_batch = sess.run([test_examples, test_labels])
-
+                    test_label_batch[test_label_batch == -1] = 0
                     feed_dict = {x_input: test_example_batch, y_input: test_label_batch,
                                  state: np.zeros([BATCH_SIZE, CELL_SIZE]), p_keep: 1.0}
 
@@ -174,6 +173,7 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
 
                     validation_writer.add_summary(summary, step)
 
+                current_state = next_state
                 step += 1
         except tf.errors.OutOfRangeError:
             print('EOF -- training done at step {}'.format(step))
@@ -191,6 +191,23 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
 
         saver = tf.train.Saver()
         saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='GRU+Softmax for Intrusion Detection')
+    group = parser.add_argument_group('Arguments')
+    group.add_argument('-t', '--train_dataset', required=True, type=str,
+                       help='path of the training dataset to be used')
+    group.add_argument('-v', '--validation_dataset', required=True, type=str,
+                       help='path of the validation dataset to be used')
+    group.add_argument('-c', '--checkpoint_path', required=True, type=str,
+                       help='path where to save the trained model')
+    group.add_argument('-l', '--log_path', required=True, type=str,
+                       help='path where to save the TensorBoard logs')
+    group.add_argument('-m', '--model_name', required=True, type=str,
+                       help='filename for the trained model')
+    arguments = parser.parse_args()
+    return arguments
 
 
 def main():
