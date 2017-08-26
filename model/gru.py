@@ -15,7 +15,7 @@
 
 """Implementation of GRU+Softmax model for Intrusion Detection"""
 
-__version__ = '0.2'
+__version__ = '0.2.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -34,17 +34,6 @@ LEARNING_RATE = 1e-6
 N_CLASSES = 2
 SEQUENCE_LENGTH = 21
 
-GPU_OPTIONS = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-
-# tf.train.Saver() parameters
-CHECKPOINT_PATH = 'checkpoint/test_softmax/'
-MODEL_NAME = 'gru_softmax.ckpt'
-
-LOGS_PATH = 'logs/test_softmax/'
-
-TRAIN_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train'
-TEST_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
-
 
 def variable_summaries(var):
     with tf.name_scope('summaries'):
@@ -58,7 +47,7 @@ def variable_summaries(var):
         tf.summary.histogram('histogram', var)
 
 
-def train_model(train_examples, train_labels, test_examples, test_labels):
+def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
     with tf.name_scope('input'):
         # [BATCH_SIZE, SEQUENCE_LENGTH]
         x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
@@ -109,8 +98,8 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
             accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
     tf.summary.scalar('accuracy', accuracy)
 
-    if not os.path.exists(CHECKPOINT_PATH):
-        os.mkdir(CHECKPOINT_PATH)
+    if not os.path.exists(checkpoint_path):
+        os.mkdir(checkpoint_path)
 
     saver = tf.train.Saver(max_to_keep=1000)
 
@@ -123,20 +112,20 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
     timestamp = str(time.asctime())  # get the time in seconds since the Epoch
 
     # create an event file to contain the TF graph summaries for training
-    train_writer = tf.summary.FileWriter(LOGS_PATH + timestamp + '-training', graph=tf.get_default_graph())
+    train_writer = tf.summary.FileWriter(log_path + timestamp + '-training', graph=tf.get_default_graph())
 
     # create an event file to contain the TF graph summaries for validation
-    validation_writer = tf.summary.FileWriter(LOGS_PATH + timestamp + '-validation', graph=tf.get_default_graph())
+    validation_writer = tf.summary.FileWriter(log_path + timestamp + '-validation', graph=tf.get_default_graph())
 
     with tf.Session() as sess:
 
         sess.run(init_op)
 
-        checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
+        checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
         if checkpoint and checkpoint.model_checkpoint_path:
             saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
-            saver.restore(sess, tf.train.latest_checkpoint(CHECKPOINT_PATH))
+            saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
             print([n.name for n in tf.get_default_graph().as_graph_def().node])
 
         coord = tf.train.Coordinator()
@@ -145,7 +134,7 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
         try:
             step = 0
             while not coord.should_stop():
-                train_example_batch, train_label_batch = sess.run([train_examples, train_labels])
+                train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
                 train_label_batch[train_label_batch == -1] = 0
                 feed_dict = {x_input: train_example_batch, y_input: train_label_batch, state: current_state,
                              learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
@@ -158,11 +147,11 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
                     accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
                     print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
                     train_writer.add_summary(summary, step)
-                    saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
+                    saver.save(sess, checkpoint_path + model_name, global_step=step)
 
                 # Validate training every 100 steps
                 if step % 100 == 0 and step > 0:
-                    test_example_batch, test_label_batch = sess.run([test_examples, test_labels])
+                    test_example_batch, test_label_batch = sess.run([test_data[0], test_data[1]])
                     test_label_batch[test_label_batch == -1] = 0
                     feed_dict = {x_input: test_example_batch, y_input: test_label_batch,
                                  state: np.zeros([BATCH_SIZE, CELL_SIZE]), p_keep: 1.0}
@@ -179,9 +168,6 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
             print('EOF -- training done at step {}'.format(step))
         except KeyboardInterrupt:
             print('Training interrupted at {}'.format(step))
-            # print(sess.run(predicted_class, feed_dict={x_input: test_example_batch,
-            #                                            state: np.zeros([BATCH_SIZE, CELL_SIZE]),
-            #                                            p_keep: 1.0}))
         finally:
             train_writer.close()
             validation_writer.close()
@@ -190,7 +176,7 @@ def train_model(train_examples, train_labels, test_examples, test_labels):
         coord.join(threads)
 
         saver = tf.train.Saver()
-        saver.save(sess, CHECKPOINT_PATH + MODEL_NAME, global_step=step)
+        saver.save(sess, checkpoint_path + model_name, global_step=step)
 
 
 def parse_args():
@@ -210,17 +196,18 @@ def parse_args():
     return arguments
 
 
-def main():
-    train_examples, train_labels = data.input_pipeline(path=TRAIN_PATH, batch_size=BATCH_SIZE,
-                                                       num_classes=N_CLASSES,
-                                                       num_epochs=HM_EPOCHS)
+def main(arguments):
+    train_data = data.input_pipeline(path=arguments.train_dataset, batch_size=BATCH_SIZE,
+                                     num_classes=N_CLASSES, num_epochs=HM_EPOCHS)
 
-    test_examples, test_labels = data.input_pipeline(path=TEST_PATH, batch_size=BATCH_SIZE,
-                                                     num_classes=N_CLASSES, num_epochs=1)
+    test_data = data.input_pipeline(path=arguments.validation_dataset, batch_size=BATCH_SIZE,
+                                    num_classes=N_CLASSES, num_epochs=1)
 
-    train_model(train_examples=train_examples, train_labels=train_labels,
-                test_examples=test_examples, test_labels=test_labels)
+    train_model(train_data=train_data, test_data=test_data, checkpoint_path=arguments.checkpoint_path,
+                log_path=arguments.log_path, model_name=arguments.model_name)
 
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+
+    main(args)
