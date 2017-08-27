@@ -15,7 +15,7 @@
 
 """Implementation of GRU+Softmax model for Intrusion Detection"""
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -49,10 +49,10 @@ def variable_summaries(var):
 
 def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
     with tf.name_scope('input'):
-        # [BATCH_SIZE, SEQUENCE_LENGTH]
+        # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
         x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
 
-        # [BATCH_SIZE, SEQUENCE_LENGTH]
+        # [BATCH_SIZE, N_CLASSES]
         y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
 
     # [BATCH_SIZE, CELL_SIZE]
@@ -83,12 +83,12 @@ def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
             output = tf.matmul(last, weight) + bias
             tf.summary.histogram('pre-activations', output)
 
+    # Softmax
     with tf.name_scope('loss'):
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_input))
     tf.summary.scalar('loss', loss)
 
-    with tf.name_scope('train'):
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     with tf.name_scope('accuracy'):
         predicted_class = tf.nn.softmax(output)
@@ -123,10 +123,12 @@ def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
 
         checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
+        # check if a trained model exists
         if checkpoint and checkpoint.model_checkpoint_path:
+            # load the graph of the trained model
             saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
+            # restore variables to resume training
             saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
-            print([n.name for n in tf.get_default_graph().as_graph_def().node])
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
@@ -135,7 +137,11 @@ def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
             step = 0
             while not coord.should_stop():
                 train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
+
+                # changed the range of labels for Softmax to {0, 1}
                 train_label_batch[train_label_batch == -1] = 0
+
+                # dictionary for key-value pair input for training
                 feed_dict = {x_input: train_example_batch, y_input: train_label_batch, state: current_state,
                              learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
 
@@ -152,7 +158,11 @@ def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
                 # Validate training every 100 steps
                 if step % 100 == 0 and step > 0:
                     test_example_batch, test_label_batch = sess.run([test_data[0], test_data[1]])
+
+                    # change the range of labels for Softmax to {0, 1}
                     test_label_batch[test_label_batch == -1] = 0
+
+                    # dictionary for key-value pair input for validation
                     feed_dict = {x_input: test_example_batch, y_input: test_label_batch,
                                  state: np.zeros([BATCH_SIZE, CELL_SIZE]), p_keep: 1.0}
 
