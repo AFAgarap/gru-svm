@@ -21,9 +21,9 @@ from os import walk
 from sklearn import preprocessing
 
 # path of the dataset to be standardized
-PATH = '/home/darth/Desktop/pandas/test'
+PATH = '/home/darth/Desktop/pandas/train'
 # destination path of standardized dataset
-WRITE_PATH = '/home/darth/Desktop/preprocessed/test'
+WRITE_PATH = '/home/darth/Desktop/preprocessed/train'
 # number of splits for the dataset
 NUM_CHUNKS = 20
 
@@ -60,8 +60,15 @@ def main():
         df = df.append(pd.read_csv(filepath_or_buffer=file, names=col_names, engine='python'))
         print('Appending {}'.format(file))
 
+    print('Current DataFrame shape: {}'.format(df.shape))
+    
+    # drop duplicate rows
+    df = df.drop_duplicates(subset=col_names, keep='first')
+    print('DataFrame shape after duplicate records removal: {}'.format(df.shape))
+    
     # drop rows with NaN values
     df[col_names] = df[col_names].dropna(axis=0, how='any')
+    print('DataFrame shape after NaN values removal: {}'.format(df.shape))
 
     # since malware_detection, ashula_detection,
     # and ids_detection col contains string data
