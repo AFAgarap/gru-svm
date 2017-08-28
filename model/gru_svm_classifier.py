@@ -14,8 +14,11 @@
 # ==============================================================================
 
 """Classifier program based on the GRU+SVM model"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse

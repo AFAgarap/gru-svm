@@ -14,8 +14,11 @@
 # ==============================================================================
 
 """Implementation of GRU+Softmax model for Intrusion Detection"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
