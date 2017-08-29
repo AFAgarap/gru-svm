@@ -1,4 +1,4 @@
-A Neural Network Architecture Combining Deep Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection
+A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection
 ===
 
 The full paper on this proposal may be read at [ResearchGate](https://goo.gl/muZP5A).
@@ -9,11 +9,10 @@ Gated Recurrent Unit (GRU) is a recently published variant of the Long Short-Ter
 ## Citation
 ```
 @article{afagarap2017grusvm,
+	title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection},
 	author={Agarap, Abien Fred},
-	title={Intrusion Detection using Support Vector Machine (SVM) as Classifier in a Deep Recurrent Neural Network (RNN)},
-	school={Adamson University},
-	year={2017},
-	note={unpublished thesis}
+	journal={ResearchGate: DOI: 10.13140/RG.2.2.14667.59684},
+	year={2017}
 }
 ```
 
