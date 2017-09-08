@@ -16,13 +16,13 @@
 """Module for getting the dataset description based on sample data"""
 import os
 import pandas as pd
-import standardize_data
+import normalize_data
 
 # a sample data to describe using pandas
 PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/4/attack'
 
-# get the column names from standardize_data.py module
-COL_NAMES = standardize_data.col_names
+# get the column names from normalize_data.py module
+COL_NAMES = normalize_data.col_names
 
 # list to contain the filenames
 files = []

@@ -16,8 +16,8 @@
 """Module for checking the normalized data."""
 import pandas as pd
 import tensorflow as tf
-from standardize_data import list_files
-from standardize_data import col_names
+from normalize_data import list_files
+from normalize_data import col_names
 
 # the path of the dataset to check
 PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test/normal'

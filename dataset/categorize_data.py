@@ -19,7 +19,7 @@ Splits the dataset to (1) logs with recorded attack, (2) logs with no recorded a
 import numpy as np
 import os
 import pandas as pd
-import standardize_data
+import normalize_data
 
 # path of the normalized data to categorize
 FILE_PATH = '/home/darth/GitHub Projects/gru_svm/dataset/test'
@@ -34,12 +34,12 @@ FILE_WITH_NORMAL = '/home/darth/GitHub Projects/gru_svm/dataset/test/normal'
 NUM_CHUNKS = 20
 
 # column names of the dataset (24 features)
-COL_NAMES = standardize_data.col_names
+COL_NAMES = normalize_data.col_names
 
 
 def main():
     # get all the CSV files under the FILE_PATH dir
-    files = standardize_data.list_files(path=FILE_PATH)
+    files = normalize_data.list_files(path=FILE_PATH)
 
     # dataframe for the dataset in the FILE_PATH
     df = pd.DataFrame()

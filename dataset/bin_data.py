@@ -18,16 +18,16 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
-import standardize_data as sd
+import normalize_data as nd
 
 __version__ = '0.1'
 __author__ = 'Abien Fred Agarap'
 
-column_names = sd.col_names
+column_names = nd.col_names
 columns_to_save = list(column_names)
 columns_to_save.remove('dst_ip_add')
 columns_to_save.remove('src_ip_add')
-cols_to_std = sd.cols_to_std
+cols_to_std = nd.cols_to_std
 cols_to_std.append('service')
 cols_to_std.append('flag')
 
@@ -36,7 +36,7 @@ def bin_data(path, write_path, num_chunks, binning):
     """Method for binning the dataset"""
 
     # get the list of files found in PATH
-    files = sd.list_files(path=path)
+    files = nd.list_files(path=path)
 
     df = pd.DataFrame()
 
