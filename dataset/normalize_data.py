@@ -14,18 +14,20 @@
 # ==============================================================================
 
 """Dataset normalization using standardization and indexing"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+__version__ = '0.1'
+__author__ = 'Abien Fred Agarap'
+
+import argparse
 import numpy as np
 import pandas as pd
 import os
 from os import walk
 from sklearn import preprocessing
 
-# path of the dataset to be standardized
-PATH = '/home/darth/Desktop/pandas/train'
-# destination path of standardized dataset
-WRITE_PATH = '/home/darth/Desktop/preprocessed/train'
-# number of splits for the dataset
-NUM_CHUNKS = 20
 
 # column names of 24 features
 col_names = ['duration', 'service', 'src_bytes', 'dest_bytes', 'count', 'same_srv_rate',
@@ -47,9 +49,9 @@ cols_to_index = ['ashula_detection', 'dst_ip_add', 'flag', 'ids_detection', 'lab
                  'malware_detection', 'protocol', 'service', 'src_ip_add']
 
 
-def main():
+def normalize_data(path, write_path, num_chunks):
     # get all the CSV files in the PATH dir
-    files = list_files(path=PATH)
+    files = list_files(path=path)
 
     # create empty df, where dfs shall be appended
     df = pd.DataFrame()
@@ -61,11 +63,7 @@ def main():
         print('Appending {}'.format(file))
 
     print('Current DataFrame shape: {}'.format(df.shape))
-    
-    # drop duplicate rows
-    df = df.drop_duplicates(subset=col_names, keep='first')
-    print('DataFrame shape after duplicate records removal: {}'.format(df.shape))
-    
+
     # drop rows with NaN values
     df[col_names] = df[col_names].dropna(axis=0, how='any')
     print('DataFrame shape after NaN values removal: {}'.format(df.shape))
@@ -96,10 +94,10 @@ def main():
     df[cols_to_std] = preprocessing.StandardScaler().fit_transform(df[cols_to_std])
 
     # split the dataframe to multiple CSV files
-    for id, df_i in enumerate(np.array_split(df, NUM_CHUNKS)):
-        df_i.to_csv(path_or_buf=os.path.join(WRITE_PATH, '{id}.csv'.format(id=id)), columns=col_names, header=None,
+    for id, df_i in enumerate(np.array_split(df, num_chunks)):
+        df_i.to_csv(path_or_buf=os.path.join(write_path, '{id}.csv'.format(id=id)), columns=col_names, header=None,
                     index=False)
-        print('Saving CSV file : {path}'.format(path=os.path.join(WRITE_PATH, '{id}'.format(id=id))))
+        print('Saving CSV file : {path}'.format(path=os.path.join(write_path, '{id}'.format(id=id))))
 
     print('Done')
 
@@ -107,10 +105,26 @@ def main():
 def list_files(path):
     """Returns the list of files present in the path"""
     file_list = []
-    for (dirpath, dirnames, filenames) in walk(path):
-        file_list.extend(os.path.join(dirpath, filename) for filename in filenames)
+    for (dir_path, dir_names, file_names) in walk(path):
+        file_list.extend(os.path.join(dir_path, filename) for filename in file_names)
     return file_list
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Data normalization script for Kyoto University 2013 Network Traffic Data')
+    group = parser.add_argument_group('Arguments')
+    group.add_argument('-d', '--dataset', required=True, type=str,
+                       help='path of the dataset to be normalized')
+    group.add_argument('-w', '--write_path', required=True, type=str,
+                       help='path where to save the normalized dataset')
+    group.add_argument('-n', '--num_chunks', required=True, type=int,
+                       help='number of file splits for the dataset')
+    arguments = parser.parse_args()
+    return arguments
+
+
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+
+    normalize_data(args.dataset, args.write_path, args.num_chunks)
