@@ -32,7 +32,7 @@ NUM_BIN = 10
 NUM_CLASSES = 2
 
 
-def predict(test_path, checkpoint_path):
+def predict(test_path, checkpoint_path, result_filename):
     """Classifies the data whether there is an attack or none"""
 
     test_file = test_path + '/24.csv'
@@ -75,11 +75,11 @@ def predict(test_path, checkpoint_path):
                 # todo Get test examples and test labels by batch
 
                 # one-hot encode features according to NUM_BIN
-                example_onehot = tf.one_hot(test_example_batch[2000:2256], NUM_BIN, 1.0, 0.0)
+                example_onehot = tf.one_hot(test_example_batch[0:256], NUM_BIN, 1.0, 0.0)
                 x_onehot = sess.run(example_onehot)
 
                 # one-hot encode labels according to NUM_CLASSES
-                label_onehot = tf.one_hot(test_label_batch[2000:2256], NUM_CLASSES, 1.0, 0.0)
+                label_onehot = tf.one_hot(test_label_batch[0:256], NUM_CLASSES, 1.0, 0.0)
                 y_onehot = sess.run(label_onehot)
 
                 # dictionary for input values for the tensors
@@ -107,7 +107,7 @@ def predict(test_path, checkpoint_path):
                 print('Accuracy : {}'.format(accuracy))
 
                 # save the full array
-                np.savetxt('softmax_results.csv', X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
+                np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
@@ -121,6 +121,8 @@ def parse_args():
                        help='path of the dataset to be classified')
     group.add_argument('-m', '--model', required=True, type=str,
                        help='path of the trained model')
+    group.add_argument('-r', '--result', required=True, type=str,
+                       help='filename for the saved result')
     arguments = parser.parse_args()
     return arguments
 
@@ -128,4 +130,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    predict(args.dataset, args.model)
+    predict(args.dataset, args.model, args.result)
