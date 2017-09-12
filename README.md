@@ -8,11 +8,14 @@ Gated Recurrent Unit (GRU) is a recently published variant of the Long Short-Ter
 
 ## Citation
 ```
-@article{agarap2017neural,
-	title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection},
-	author={Agarap, Abien Fred},
-	journal={ResearchGate: DOI: 10.13140/RG.2.2.14667.59684},
-	year={2017}
+@online{agarap2017/online,
+	author={Abien Fred Agarap}
+	title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection in Network Traffic Data},
+	date={2017-09-10},
+	year={2017},
+	eprintclass={cs.NE},
+	eprinttype={arXiV},
+	eprint={cs.NE/1709.03082},
 }
 ```
 
@@ -42,3 +45,20 @@ This research presents a modified version of the novel approach proposed by <a h
 The proposed model will use deep <i>recurrent neural networks</i> (RNNs) with <i>gated recurrent units</i> (GRUs) in place of ESN. RNNs are used for analyzing and/or predicting sequential data, which makes it a viable candidate for intrusion detection (<a href="http://ecite.utas.edu.au/75263">Negnevitsky, 2011</a>; <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, 2015</a>). In addition, the RNN architecture has already been used in a study for detecting credit card fraud through fraudulent behavior (by analyzing user logs) (<a href="http://lab.iisec.ac.jp/~tanaka_lab/images/pdf/kennkyukai/kennkyukai-2016-10.pdf">Ando, 2016</a>), but with the absence of SVM.
 
 Lastly, the data to be used in this study will be the 2013 traffic data obtained by the honeypot systems in Kyoto University (<a href="http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf">Song, Takakura, & Okabe, 2006</a>), a sequential data in nature, hence the use of RNNs.
+
+
+## License
+
+   Copyright 2017 Abien Fred Agarap
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+   
+   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
