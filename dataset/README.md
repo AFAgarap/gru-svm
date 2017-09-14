@@ -3,22 +3,22 @@
 
 ### About ###
 
-The [traffic data](http://www.takakura.com/Kyoto_data/ext_old_data201704/) to be used for the training and evaluation of the proposed GRU-SVM model is from the honeypot systems of Kyoto University. You may read the document describing the data features [here](http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf).
+The [network traffic data](http://www.takakura.com/Kyoto_data/ext_old_data201704/) to be used for the training and evaluation of the proposed GRU-SVM model is from the honeypot systems of Kyoto University. You may read the document describing the data features [here](http://www.takakura.com/Kyoto_data/BenchmarkData-Description-v5.pdf).
 
 The dataset contains logs for 360 days of the year 2013. Only the logs for the following dates are non-existing: (1) March 2-4, and (2) October 13-14 -- totalling to 5 days.
 
 ### Data Pre-processing ###
 
-For the GRU-SVM computational model to utilize the dataset, it must be normalized first. That is, to scale or index non-integer values to a format which can be read by the neural network. Based from [this study](http://scholarworks.rit.edu/cgi/viewcontent.cgi?article=9241&context=theses), the pre-processing will be as follows:
+For the computational models in this study to utilize the dataset, it must be normalized first. That is, to standardize continuous features, and to index categorical features.
+The preprocessing done in this study were as follows:
 
-* Split the dataset into multiple files, separated which pertains to (1) logs with detected attack(s), and (2) logs with no detected attack(s).
-* Map symbolic features like `service`, `flag`, and `protocol` to `[0, n-1]` where n is the number of symbols in a feature.
-* Linear scaling to `[0.0, 1.0]` of integer values like `duration`, `src_bytes`, `dest_bytes`, `dst_host_count`, `dst_host_srv_count`, and `start_time`.
-* Boolean values and continuous values shall be left as is.
+* Map categorical features like `service`, `flag`, and `protocol` to `[0, n-1]` where n is the number of symbols in a feature.
+* Standardize continuous features like `duration`, `src_bytes`, `dest_bytes`, `dst_host_count`, `dst_host_srv_count`, and `start_time`.
+* After the preceding processes, the normalized data was binned using decile binning (for one-hot encoding purposes).
 
-Data normalization was done using [standardize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/standardize_data.py), while splitting of the dataset into two: (1) logs with detected attack(s), and (2) logs with no detected attack(s) was done using [categorize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/categorize_data.py). To check if the data pre-processing was successful, the normalization and categorization that is, the module [check_standardized_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/check_standardized_data.py) was used.
+Data normalization was done using [normalize_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/normalize_data.py), while binning of the normalized dataset was done using [bin_data.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/bin_data.py).
 
-Sample data with detected attack(s):
+Sample data:
 
 ```
 0 : example [ -3.66881303e-02   3.00000000e+00  -2.20432188e-02  -2.52959970e-03
@@ -39,24 +39,19 @@ Sample data with detected attack(s):
   -5.04273891e-01   6.00000000e+00   0.00000000e+00   0.00000000e+00
    0.00000000e+00   1.58530000e+04   5.96221209e-01   2.83000000e+03
    1.88292623e+00   1.35434210e+00   1.00000000e+00], label 1.0
-```
-
-Sample data with no detected attack(s):
-
-```
-0 : example [ -2.43421942e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
+3 : example [ -2.43421942e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
    6.24429166e-01   4.60362226e-01  -3.01768869e-01  -6.72629297e-01
    8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
   -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
    0.00000000e+00   3.27220000e+04   1.38504553e+00   6.64000000e+02
   -1.78705454e-01   2.04480633e-01   1.00000000e+00], label 0.0
-1 : example [ -2.57230941e-02   9.00000000e+00   4.68075182e-03  -5.28765901e-04
+4 : example [ -2.57230941e-02   9.00000000e+00   4.68075182e-03  -5.28765901e-04
    2.08318934e-01   5.65328360e-01  -3.01768869e-01  -6.72629297e-01
    8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
   -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
    0.00000000e+00   3.27220000e+04   1.41305792e+00   6.64000000e+02
   -1.78705454e-01   2.04521850e-01   1.00000000e+00], label 0.0
-2 : example [ -2.53630150e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
+5 : example [ -2.53630150e-02   9.00000000e+00   3.89906368e-03  -5.28765901e-04
    3.12346488e-01   5.86321592e-01  -3.01768869e-01  -6.72629297e-01
    8.50492895e-01   4.42411065e-01  -1.90726683e-01  -4.77430880e-01
   -5.04273891e-01   1.00000000e+01   0.00000000e+00   0.00000000e+00
@@ -64,7 +59,7 @@ Sample data with no detected attack(s):
   -1.78705454e-01   2.04521850e-01   1.00000000e+00], label 0.0
 ```
 
-You may notice the labels for each state: `1` when there is a detected attack, and `0` when there is no detected attack. The labels were converted from `-1` and `-2` for detected attack(s) to `1`, and from `1` for no detected attack(s) to `0`. This was done in [standardize_data.py line #60](https://github.com/AFAgarap/gru-svm/blob/master/dataset/standardize_data.py#L60):
+You may notice the labels for each state: `1` when there is a detected attack, and `0` when there is no detected attack. The labels were converted from `-1` and `-2` for detected attack(s) to `1`, and from `1` for no detected attack(s) to `0`. This was done in [normalize_data.py line #83](https://github.com/AFAgarap/gru-svm/blob/master/dataset/normalize_data.py#L83):
 
 ```
 df['label'] = df['label'].apply(lambda label : 1 if label == -1 or label == -2 else 0)
@@ -118,10 +113,10 @@ max    2.399944e+01
 
 ```
 
-The values that belong to the missing indices `[1], [13-16], [18], [20], [23]` are either symbolic features or boolean feature or mixed.
+The values that belong to the missing indices `[1], [13-16], [18], [20], [23]` were categorical features.
 
 
-After normalizing the dataset, a sample data was described again using [pandas-describe.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/pandas-describe.py). It can be noticed that the `mean` and `std` of the data is `0` or approaching zero and `1` or rounded off to 1 respectively, for the continuous and quasi-continuous data. The same cannot be said of course on categorical (symbolic or boolean or mixed) data: indices `[1], [13-16], [18], [20], [23]`.
+After normalizing the dataset, a sample data was described again using [pandas-describe.py](https://github.com/AFAgarap/gru-svm/blob/master/dataset/pandas-describe.py). It can be noticed that the `mean` and `std` of the data is `0` or approaching zero and `1` or rounded off to 1 respectively, for the continuous and quasi-continuous data. The same cannot be said of course on categorical features: indices `[1], [13-16], [18], [20], [23]`.
 
 ```
            duration       service     src_bytes    dest_bytes         count  \
