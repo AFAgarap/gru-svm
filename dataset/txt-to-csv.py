@@ -14,26 +14,28 @@
 # ==============================================================================
 
 """
-Converts the original Kyoto University dataset
+Converts the original Kyoto University dataset from
  Text files to CSV files
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-__version__ = '0.1'
+__version__ = '0.1.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
 import csv
+from normalize_data import list_files
 import os
 from os import walk
 
 
 def convert_txt_to_csv(txt_path, csv_path):
-    data = []  # list to store the filenames under the subdirectories of the <path>
-    csv_data = []  # list to store the converted CSV files
+    # list to store the filenames under the subdirectories of the <path>
+    data = list_files(path=txt_path)
 
-    for (dirpath, dirnames, filenames) in walk(txt_path):
-        ''' Append to the list the filenames under the subdirectories of the <path> '''
-        data.extend(os.path.join(dirpath, filename) for filename in filenames)
+    csv_data = []  # list to store the converted CSV files
 
     # Create the <csv_path> if it does not exist
     os.makedirs(csv_path) if not os.path.exists(csv_path) else print('CSV folder exists')
@@ -50,7 +52,7 @@ def convert_txt_to_csv(txt_path, csv_path):
 
     for index in range(len(data)):
         ''' Store the processed CSV filename to <csv_data> list '''
-        csv_data.append(os.path.join(csv_path, data[index].split(path)[1].replace('txt', 'csv')))
+        csv_data.append(os.path.join(csv_path, data[index].split(csv_path)[1].replace('txt', 'csv')))
 
     for index in range(len(data)):
         ''' Reading the text files delimited with tab, and converts it to CSV '''
