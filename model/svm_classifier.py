@@ -30,7 +30,7 @@ CELL_SIZE = 256
 NUM_CLASSES = 2
 
 
-def predict(test_path, checkpoint_path):
+def predict(test_path, checkpoint_path, result_filename):
     """Classifies the data whether there is an attack or none"""
 
     test_file = test_path + '/24.csv'
@@ -96,7 +96,7 @@ def predict(test_path, checkpoint_path):
                 print('Accuracy : {}'.format(accuracy))
 
                 # save the full array
-                np.savetxt('linear_svm_results.csv', X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
+                np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
@@ -110,6 +110,8 @@ def parse_args():
                        help='path of the dataset to be classified')
     group.add_argument('-m', '--model', required=True, type=str,
                        help='path of the trained model')
+    group.add_argument('-r', '--result', required=True, type=str,
+                       help='filename for the saved result')
     arguments = parser.parse_args()
     return arguments
 
@@ -117,4 +119,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    predict(args.dataset, args.model)
+    predict(args.dataset, args.model, args.result)
