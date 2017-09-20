@@ -2,7 +2,7 @@ A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support V
 ===
 
 [![License]https://img.shields.io/aur/license/yaourt.svg](LICENSE)
-[![JIRA sprint completion](https://img.shields.io/jira/sprint/https/jira.spring.io/94.svg)]()
+[![JIRA sprint completion](https://img.shields.io/jira/sprint/https/jira.spring.io/90.svg)]()
 
 The full paper on this project may be read at the following sites: [ResearchGate](https://goo.gl/muZP5A), [arXiv.org](https://arxiv.org/abs/1709.03082), [Academia.edu](https://goo.gl/8aBXpX).
 
