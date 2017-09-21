@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.2.3'
+__version__ = '0.3.0'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -53,7 +53,69 @@ class GruSoftmax:
 
         def __graph__():
             """Build the inference graph"""
-            pass
+            with tf.name_scope('input'):
+                # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
+                x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
+
+                # [BATCH_SIZE, N_CLASSES]
+                y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
+
+            # [BATCH_SIZE, CELL_SIZE]
+            state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
+
+            learning_rate = tf.placeholder(tf.float32, name='learning_rate')
+            p_keep = tf.placeholder(tf.float32, name='p_keep')
+
+            cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
+            drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
+
+            # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
+            # states: [BATCH_SIZE, CELL_SIZE]
+            outputs, states = tf.nn.dynamic_rnn(drop_cell, x_input, initial_state=state, dtype=tf.float32)
+
+            states = tf.identity(states, name='H')
+
+            with tf.name_scope('final_training_ops'):
+                with tf.name_scope('weights'):
+                    weight = tf.get_variable('weights',
+                                             initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
+                    self.variable_summaries(weight)
+                with tf.name_scope('biases'):
+                    bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
+                    self.variable_summaries(bias)
+                hf = tf.transpose(outputs, [1, 0, 2])
+                last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
+                with tf.name_scope('Wx_plus_b'):
+                    output = tf.matmul(last, weight) + bias
+                    tf.summary.histogram('pre-activations', output)
+
+            # Softmax
+            with tf.name_scope('loss'):
+                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_input))
+            tf.summary.scalar('loss', loss)
+
+            optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+
+            with tf.name_scope('accuracy'):
+                predicted_class = tf.nn.softmax(output)
+                with tf.name_scope('correct_prediction'):
+                    correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_input, 1))
+                with tf.name_scope('accuracy'):
+                    accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
+            tf.summary.scalar('accuracy', accuracy)
+
+            merged = tf.summary.merge_all()  # merge all the summaries collected from TF graph
+
+            self.x_input = x_input
+            self.y_input = y_input
+            self.p_keep = p_keep
+            self.loss = loss
+            self.optimizer = optimizer
+            self.state = state
+            self.states = states
+            self.learning_rate = learning_rate
+            self.accuracy = accuracy
+            self.merged = merged
 
         sys.stdout.write('\n<log> Building Graph...')
         __graph__()
@@ -61,6 +123,95 @@ class GruSoftmax:
 
     def train(self):
         """Train the model"""
+        if not os.path.exists(self.checkpoint_path):
+            os.mkdir(self.checkpoint_path)
+
+        saver = tf.train.Saver(max_to_keep=1000)
+
+        current_state = np.zeros([BATCH_SIZE, CELL_SIZE])  # initialize H (current_state) with values of zeros
+
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())  # variable initializer
+
+        timestamp = str(time.asctime())  # get the time in seconds since the Epoch
+
+        # create an event file to contain the TF graph summaries for training
+        train_writer = tf.summary.FileWriter(self.log_path + timestamp + '-training', graph=tf.get_default_graph())
+
+        # create an event file to contain the TF graph summaries for validation
+        validation_writer = tf.summary.FileWriter(self.log_path + timestamp + '-validation', graph=tf.get_default_graph())
+
+        with tf.Session() as sess:
+
+            sess.run(init_op)
+
+            checkpoint = tf.train.get_checkpoint_state(self.checkpoint_path)
+
+            # check if a trained model exists
+            if checkpoint and checkpoint.model_checkpoint_path:
+                # load the graph of the trained model
+                saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
+                # restore variables to resume training
+                saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
+
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
+
+            try:
+                step = 0
+                while not coord.should_stop():
+                    train_example_batch, train_label_batch = sess.run([self.train_data[0], self.train_data[1]])
+
+                    # changed the range of labels for Softmax to {0, 1}
+                    train_label_batch[train_label_batch == -1] = 0
+
+                    # dictionary for key-value pair input for training
+                    feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
+                                 self.state: current_state,
+                                 self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
+
+                    summary, _, epoch_loss, next_state = sess.run([self.merged, self.optimizer, self.loss, self.states],
+                                                                  feed_dict=feed_dict)
+
+                    # Display training accuracy every 100 steps and at step 0
+                    if step % 100 == 0:
+                        accuracy_ = sess.run(self.accuracy, feed_dict=feed_dict)
+                        print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
+                        train_writer.add_summary(summary, step)
+                        saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+
+                    # Validate training every 100 steps
+                    if step % 100 == 0 and step > 0:
+                        test_example_batch, test_label_batch = sess.run([self.test_data[0], self.test_data[1]])
+
+                        # change the range of labels for Softmax to {0, 1}
+                        test_label_batch[test_label_batch == -1] = 0
+
+                        # dictionary for key-value pair input for validation
+                        feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
+                                     self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
+
+                        summary, test_loss, test_accuracy = sess.run([self.merged, self.loss, self.accuracy],
+                                                                     feed_dict=feed_dict)
+
+                        print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
+
+                        validation_writer.add_summary(summary, step)
+
+                    current_state = next_state
+                    step += 1
+            except tf.errors.OutOfRangeError:
+                print('EOF -- training done at step {}'.format(step))
+            except KeyboardInterrupt:
+                print('Training interrupted at {}'.format(step))
+            finally:
+                train_writer.close()
+                validation_writer.close()
+                coord.request_stop()
+
+            coord.join(threads)
+
+            saver = tf.train.Saver()
+            saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
     @staticmethod
     def variable_summaries(var):
@@ -73,148 +224,6 @@ class GruSoftmax:
             tf.summary.scalar('max', tf.reduce_max(var))
             tf.summary.scalar('min', tf.reduce_min(var))
             tf.summary.histogram('histogram', var)
-
-
-def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
-    with tf.name_scope('input'):
-        # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
-        x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
-
-        # [BATCH_SIZE, N_CLASSES]
-        y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
-
-    # [BATCH_SIZE, CELL_SIZE]
-    state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
-
-    learning_rate = tf.placeholder(tf.float32, name='learning_rate')
-    p_keep = tf.placeholder(tf.float32, name='p_keep')
-
-    cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
-    drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
-
-    # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
-    # states: [BATCH_SIZE, CELL_SIZE]
-    outputs, states = tf.nn.dynamic_rnn(drop_cell, x_input, initial_state=state, dtype=tf.float32)
-
-    states = tf.identity(states, name='H')
-
-    with tf.name_scope('final_training_ops'):
-        with tf.name_scope('weights'):
-            weight = tf.get_variable('weights', initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
-            variable_summaries(weight)
-        with tf.name_scope('biases'):
-            bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
-            variable_summaries(bias)
-        hf = tf.transpose(outputs, [1, 0, 2])
-        last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
-        with tf.name_scope('Wx_plus_b'):
-            output = tf.matmul(last, weight) + bias
-            tf.summary.histogram('pre-activations', output)
-
-    # Softmax
-    with tf.name_scope('loss'):
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_input))
-    tf.summary.scalar('loss', loss)
-
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-
-    with tf.name_scope('accuracy'):
-        predicted_class = tf.nn.softmax(output)
-        with tf.name_scope('correct_prediction'):
-            correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_input, 1))
-        with tf.name_scope('accuracy'):
-            accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-    tf.summary.scalar('accuracy', accuracy)
-
-    if not os.path.exists(checkpoint_path):
-        os.mkdir(checkpoint_path)
-
-    saver = tf.train.Saver(max_to_keep=1000)
-
-    current_state = np.zeros([BATCH_SIZE, CELL_SIZE])  # initialize H (current_state) with values of zeros
-
-    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())  # variable initializer
-
-    merged = tf.summary.merge_all()  # merge all the summaries collected from TF graph
-
-    timestamp = str(time.asctime())  # get the time in seconds since the Epoch
-
-    # create an event file to contain the TF graph summaries for training
-    train_writer = tf.summary.FileWriter(log_path + timestamp + '-training', graph=tf.get_default_graph())
-
-    # create an event file to contain the TF graph summaries for validation
-    validation_writer = tf.summary.FileWriter(log_path + timestamp + '-validation', graph=tf.get_default_graph())
-
-    with tf.Session() as sess:
-
-        sess.run(init_op)
-
-        checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
-
-        # check if a trained model exists
-        if checkpoint and checkpoint.model_checkpoint_path:
-            # load the graph of the trained model
-            saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
-            # restore variables to resume training
-            saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
-
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
-
-        try:
-            step = 0
-            while not coord.should_stop():
-                train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
-
-                # changed the range of labels for Softmax to {0, 1}
-                train_label_batch[train_label_batch == -1] = 0
-
-                # dictionary for key-value pair input for training
-                feed_dict = {x_input: train_example_batch, y_input: train_label_batch, state: current_state,
-                             learning_rate: LEARNING_RATE, p_keep: DROPOUT_P_KEEP}
-
-                summary, _, epoch_loss, next_state = sess.run([merged, optimizer, loss, states],
-                                                              feed_dict=feed_dict)
-
-                # Display training accuracy every 100 steps and at step 0
-                if step % 100 == 0:
-                    accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
-                    print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
-                    train_writer.add_summary(summary, step)
-                    saver.save(sess, checkpoint_path + model_name, global_step=step)
-
-                # Validate training every 100 steps
-                if step % 100 == 0 and step > 0:
-                    test_example_batch, test_label_batch = sess.run([test_data[0], test_data[1]])
-
-                    # change the range of labels for Softmax to {0, 1}
-                    test_label_batch[test_label_batch == -1] = 0
-
-                    # dictionary for key-value pair input for validation
-                    feed_dict = {x_input: test_example_batch, y_input: test_label_batch,
-                                 state: np.zeros([BATCH_SIZE, CELL_SIZE]), p_keep: 1.0}
-
-                    summary, test_loss, test_accuracy = sess.run([merged, loss, accuracy], feed_dict=feed_dict)
-
-                    print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
-
-                    validation_writer.add_summary(summary, step)
-
-                current_state = next_state
-                step += 1
-        except tf.errors.OutOfRangeError:
-            print('EOF -- training done at step {}'.format(step))
-        except KeyboardInterrupt:
-            print('Training interrupted at {}'.format(step))
-        finally:
-            train_writer.close()
-            validation_writer.close()
-            coord.request_stop()
-
-        coord.join(threads)
-
-        saver = tf.train.Saver()
-        saver.save(sess, checkpoint_path + model_name, global_step=step)
 
 
 def parse_args():
@@ -238,11 +247,13 @@ def main(arguments):
     train_data = data.input_pipeline(path=arguments.train_dataset, batch_size=BATCH_SIZE,
                                      num_classes=N_CLASSES, num_epochs=HM_EPOCHS)
 
-    test_data = data.input_pipeline(path=arguments.validation_dataset, batch_size=BATCH_SIZE,
-                                    num_classes=N_CLASSES, num_epochs=1)
+    validation_data = data.input_pipeline(path=arguments.validation_dataset, batch_size=BATCH_SIZE,
+                                          num_classes=N_CLASSES, num_epochs=1)
 
-    train_model(train_data=train_data, test_data=test_data, checkpoint_path=arguments.checkpoint_path,
-                log_path=arguments.log_path, model_name=arguments.model_name)
+    model = GruSoftmax(train_data=train_data, test_data=validation_data, checkpoint_path=arguments.checkpoint_path,
+                       log_path=arguments.log_path, model_name=arguments.model_name)
+
+    model.train()
 
 
 if __name__ == '__main__':
