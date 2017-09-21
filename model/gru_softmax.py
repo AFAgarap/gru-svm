@@ -28,6 +28,7 @@ import argparse
 import data
 import numpy as np
 import os
+import sys
 import tensorflow as tf
 import time
 
@@ -41,16 +42,37 @@ N_CLASSES = 2
 SEQUENCE_LENGTH = 21
 
 
-def variable_summaries(var):
-    with tf.name_scope('summaries'):
-        mean = tf.reduce_mean(var)
-        tf.summary.scalar('mean', mean)
-        with tf.name_scope('stddev'):
-            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-        tf.summary.scalar('stddev', stddev)
-        tf.summary.scalar('max', tf.reduce_max(var))
-        tf.summary.scalar('min', tf.reduce_min(var))
-        tf.summary.histogram('histogram', var)
+class GruSoftmax:
+
+    def __init__(self, train_data, test_data, checkpoint_path, log_path, model_name):
+        self.train_data = train_data
+        self.test_data = test_data
+        self.checkpoint_path = checkpoint_path
+        self.log_path = log_path
+        self.model_name = model_name
+
+        def __graph__():
+            """Build the inference graph"""
+            pass
+
+        sys.stdout.write('\n<log> Building Graph...')
+        __graph__()
+        sys.stdout.write('</log>\n')
+
+    def train(self):
+        """Train the model"""
+
+    @staticmethod
+    def variable_summaries(var):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.summary.scalar('mean', mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+            tf.summary.scalar('stddev', stddev)
+            tf.summary.scalar('max', tf.reduce_max(var))
+            tf.summary.scalar('min', tf.reduce_min(var))
+            tf.summary.histogram('histogram', var)
 
 
 def train_model(train_data, test_data, checkpoint_path, log_path, model_name):
