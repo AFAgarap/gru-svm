@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -42,10 +42,7 @@ SEQUENCE_LENGTH = 21
 SVM_C = 0.5
 
 # learning rate decay parameters
-# INITIAL_LEARNING_RATE = 0.01
-INITIAL_LEARNING_RATE = 1e-5
-LEARNING_RATE_DECAY_FACTOR = 0.995
-NUM_EPOCHS_PER_DECAY = 1
+LEARNING_RATE = 1e-5
 
 
 class GruSvm:
@@ -70,9 +67,6 @@ class GruSvm:
 
             p_keep = tf.placeholder(dtype=tf.float32, name='p_keep')
             learning_rate = tf.placeholder(dtype=tf.float32, name='learning_rate')
-
-            # [None]
-            evaluation_value = tf.placeholder(dtype=tf.float32, name='evaluation_value')
 
             cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
             drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
@@ -99,13 +93,6 @@ class GruSvm:
                     output = tf.matmul(last, weight) + bias
                     tf.summary.histogram('pre-activations', output)
 
-            # g_step = tf.placeholder(dtype=tf.float32, shape=[], name='global_step')
-            # learning_rate = tf.train.exponential_decay(learning_rate=INITIAL_LEARNING_RATE,
-            #                                            global_step=g_step, decay_steps=NUM_EPOCHS_PER_DECAY,
-            #                                            decay_rate=LEARNING_RATE_DECAY_FACTOR, staircase=True,
-            #                                            name='learning_rate')
-            # tf.summary.scalar('learning_rate', learning_rate)
-
             # L2-SVM
             with tf.name_scope('svm'):
                 regularization_loss = 0.5 * tf.reduce_sum(tf.square(weight))
@@ -129,17 +116,6 @@ class GruSvm:
             # merge all the summaries collected from the TF graph
             merged = tf.summary.merge_all()
 
-            # with tf.name_scope('evaluation'):
-            #     evaluation_predicted_class = tf.sign(output)
-            #     evaluation_predicted_class = tf.identity(evaluation_predicted_class, name='prediction')
-            #     with tf.name_scope('correct_prediction'):
-            #         evaluation_correct = tf.equal(tf.argmax(evaluation_predicted_class, 1), tf.argmax(y_input, 1))
-            #     with tf.name_scope('accuracy'):
-            #         evaluation_accuracy = tf.reduce_mean(tf.cast(evaluation_correct, 'float'))
-            #
-            # evaluation_summary_op = tf.summary.merge([tf.summary.scalar('evaluation_accuracy', evaluation_value),
-            #                                           tf.summary.scalar('evaluation_loss', loss)], name='evaluation')
-
             # set class properties
             self.x_input = x_input
             self.y_input = y_input
@@ -148,13 +124,9 @@ class GruSvm:
             self.optimizer = optimizer
             self.state = state
             self.states = states
-            # self.g_step = g_step
             self.learning_rate = learning_rate
             self.accuracy = accuracy
             self.merged = merged
-            # self.evaluation_value = evaluation_value
-            # self.evaluation_accuracy = evaluation_accuracy
-            # self.evaluation_summary_op = evaluation_summary_op
 
         sys.stdout.write('\n<log> Building Graph...')
         __graph__()
@@ -199,16 +171,10 @@ class GruSvm:
                     train_example_batch, train_label_batch = sess.run([self.train_data[0], self.train_data[1]])
 
                     # dictionary for key-value pair input for training
-                    # feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
-                    #              self.state: current_state,
-                    #              self.g_step: step, self.p_keep: DROPOUT_P_KEEP}
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
                                  self.state: current_state,
-                                 self.learning_rate: INITIAL_LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
+                                 self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
 
-                    # train_summary, lr, _, next_state = sess.run(
-                    #     [self.merged, self.learning_rate, self.optimizer, self.states],
-                    #     feed_dict=feed_dict)
                     train_summary, _, next_state = sess.run([self.merged, self.optimizer, self.states],
                                                             feed_dict=feed_dict)
 
@@ -236,26 +202,15 @@ class GruSvm:
                                      self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
 
                         # get validation loss and accuracy
-                        # evaluation_loss, evaluation_accuracy = sess.run([self.loss, self.evaluation_accuracy],
-                        #                                                 feed_dict=feed_dict)
-                        evaluation_loss, evaluation_accuracy = sess.run([self.loss, self.accuracy],
-                                                                        feed_dict=feed_dict)
+                        validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
+                                                                                             self.accuracy],
+                                                                                            feed_dict=feed_dict)
 
-                        # dictionary for key-value pair input for summary writing
-                        # feed_dict = {self.evaluation_value: evaluation_accuracy, self.loss: evaluation_loss}
-
-                        # get summary of validation
-                        # evaluation_summary = sess.run(self.evaluation_summary_op, feed_dict=feed_dict)
-
-                        summary = sess.run(self.merged, feed_dict=feed_dict)
-                        validation_writer.add_summary(summary, step)
+                        validation_writer.add_summary(validation_summary, step)
 
                         # display validation loss and accuracy
-                        print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, evaluation_loss,
-                                                                                        evaluation_accuracy))
-
-                        # write the validation summary
-                        # train_writer.add_summary(evaluation_summary, step)
+                        print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
+                                                                                        validation_accuracy))
 
                     current_state = next_state
                     step += 1
