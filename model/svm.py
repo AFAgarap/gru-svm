@@ -108,8 +108,10 @@ class Svm:
         sys.stdout.write('</log>\n')
 
     def train(self):
-        if not os.path.exists(checkpoint_path):
-            os.mkdir(checkpoint_path)
+        """Train the model"""
+
+        if not os.path.exists(self.checkpoint_path):
+            os.mkdir(self.checkpoint_path)
 
         saver = tf.train.Saver(max_to_keep=1000)
 
@@ -120,23 +122,23 @@ class Svm:
         timestamp = str(time.asctime())
 
         # event file to contain TF graph summaries during training
-        train_writer = tf.summary.FileWriter(log_path + timestamp + '-training', graph=tf.get_default_graph())
+        train_writer = tf.summary.FileWriter(self.log_path + timestamp + '-training', graph=tf.get_default_graph())
 
         # event file to contain TF graph summaries during validation
-        validation_writer = tf.summary.FileWriter(log_path + timestamp + '-validation', graph=tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter(self.log_path + timestamp + '-validation', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
 
             sess.run(init_op)
 
-            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
+            checkpoint = tf.train.get_checkpoint_state(self.checkpoint_path)
 
             # check if a trained model exists
             if checkpoint and checkpoint.model_checkpoint_path:
                 # load the graph from the trained model
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
                 # restore the variables
-                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+                saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord)
@@ -145,7 +147,7 @@ class Svm:
                 step = 0
                 while not coord.should_stop():
                     # get the training features and labels
-                    train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
+                    train_example_batch, train_label_batch = sess.run([self.train_data[0], self.train_data[1]])
 
                     # decode the one-hot encoded data to single-digit integer
                     train_example_batch_t = tf.transpose(train_example_batch, [2, 0, 1])
@@ -153,22 +155,23 @@ class Svm:
                     train_example_batch_decoded_ = sess.run(train_example_batch_decoded)
 
                     # dictionary for key-value pair input for training
-                    feed_dict = {x_input: train_example_batch_decoded_, y_input: train_label_batch,
-                                 learning_rate: LEARNING_RATE}
+                    feed_dict = {self.x_input: train_example_batch_decoded_, self.y_input: train_label_batch,
+                                 self.learning_rate: LEARNING_RATE}
 
-                    summary, _, epoch_loss = sess.run([merged, optimizer, loss], feed_dict=feed_dict)
+                    summary, _, epoch_loss = sess.run([self.merged, self.optimizer, self.loss], feed_dict=feed_dict)
 
                     # display training accuracy and loss every 100 steps and at step 0
                     if step % 100 == 0:
-                        accuracy_ = sess.run(accuracy, feed_dict=feed_dict)
+                        accuracy_ = sess.run(self.accuracy, feed_dict=feed_dict)
                         print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
                         train_writer.add_summary(summary, step)
-                        saver.save(sess, checkpoint_path + model_name, global_step=step)
+                        saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
                     # display validation accuracy and loss every 100 steps
                     if step % 100 == 0 and step > 0:
                         # get the validation features and labels
-                        test_example_batch, test_label_batch = sess.run([test_data[0], test_data[1]])
+                        test_example_batch, test_label_batch = sess.run([self.validation_data[0],
+                                                                         self.validation_data[1]])
 
                         # decode the one-hot encoded data to single-digit integer
                         test_example_batch_t = tf.transpose(test_example_batch, [2, 0, 1])
@@ -176,9 +179,10 @@ class Svm:
                         test_example_batch_decoded_ = sess.run(test_example_batch_decoded)
 
                         # dictionary for key-value pair input for validation
-                        feed_dict = {x_input: test_example_batch_decoded_, y_input: test_label_batch}
+                        feed_dict = {self.x_input: test_example_batch_decoded_, self.y_input: test_label_batch}
 
-                        summary, test_loss, test_accuracy = sess.run([merged, loss, accuracy], feed_dict=feed_dict)
+                        summary, test_loss, test_accuracy = sess.run([self.merged, self.loss, self.accuracy],
+                                                                     feed_dict=feed_dict)
 
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
                         validation_writer.add_summary(summary, step)
@@ -194,7 +198,7 @@ class Svm:
                 coord.request_stop()
             coord.join(threads)
 
-            saver.save(sess, checkpoint_path + model_name, global_step=step)
+            saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
     @staticmethod
     def variable_summaries(var):
@@ -233,8 +237,10 @@ def main(arguments):
     test_data = data.input_pipeline(path=arguments.validation_dataset, batch_size=BATCH_SIZE,
                                     num_classes=N_CLASSES, num_epochs=1)
 
-    train_model(train_data=train_data, test_data=test_data, checkpoint_path=arguments.checkpoint_path,
+    model = Svm(train_data=train_data, validation_data=test_data, checkpoint_path=arguments.checkpoint_path,
                 log_path=arguments.log_path, model_name=arguments.model_name)
+
+    model.train()
 
 
 if __name__ == '__main__':
