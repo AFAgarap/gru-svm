@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -35,24 +35,26 @@ NUM_BIN = 10
 NUM_CLASSES = 2
 
 
-def predict(test_path, checkpoint_path, result_filename):
+def predict(test_data, checkpoint_path, result_filename):
     """Classifies the data whether there is an attack or none"""
 
-    test_file = test_path + '/24.csv'
     # load the CSV file to numpy array
-    test_example_batch = np.genfromtxt(test_file, delimiter=',')
+    test_data = np.genfromtxt(test_data, delimiter=',')
+
+    # get the size of the test data
+    test_size = test_data.shape[0]
 
     # isolate the label to a different numpy array
-    test_label_batch = test_example_batch[:, 17]
+    test_label = test_data[:, 17]
 
     # cast the label array to float32
-    test_label_batch = test_label_batch.astype(np.float32)
+    test_label = test_label.astype(np.float32)
 
     # remove the label from the feature numpy array
-    test_example_batch = np.delete(arr=test_example_batch, obj=[17], axis=1)
+    test_data = np.delete(arr=test_data, obj=[17], axis=1)
 
     # cast the feature array to float32
-    test_example_batch = test_example_batch.astype(np.float32)
+    test_data = test_data.astype(np.float32)
 
     # create initial RNN state array, filled with zeros
     initial_state = np.zeros([BATCH_SIZE, CELL_SIZE])
@@ -77,15 +79,16 @@ def predict(test_path, checkpoint_path, result_filename):
             print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
 
         try:
-            for _ in range(1):
-                # todo Get test examples and test labels by batch
+            for step in range(test_size // BATCH_SIZE):
+
+                offset = (step * BATCH_SIZE) % test_size
 
                 # one-hot encode features according to NUM_BIN
-                example_onehot = tf.one_hot(test_example_batch[2000:2256], NUM_BIN, 1.0, 0.0)
+                example_onehot = tf.one_hot(test_data[offset:(offset + BATCH_SIZE)], NUM_BIN, 1.0, 0.0)
                 x_onehot = sess.run(example_onehot)
 
                 # one-hot encode labels according to NUM_CLASSES
-                label_onehot = tf.one_hot(test_label_batch[2000:2256], NUM_CLASSES, 1.0, -1.0)
+                label_onehot = tf.one_hot(test_label[offset:(offset + BATCH_SIZE)], NUM_CLASSES, 1.0, -1.0)
                 y_onehot = sess.run(label_onehot)
 
                 # dictionary for input values for the tensors
@@ -122,8 +125,8 @@ def predict(test_path, checkpoint_path, result_filename):
 def parse_args():
     parser = argparse.ArgumentParser(description='GRU+SVM Classifier')
     group = parser.add_argument_group('Arguments')
-    group.add_argument('-d', '--dataset', required=True, type=str,
-                       help='path of the dataset to be classified')
+    group.add_argument('-d', '--test_data', required=True, type=str,
+                       help='path of the test data to be classified')
     group.add_argument('-m', '--model', required=True, type=str,
                        help='path of the trained model')
     group.add_argument('-r', '--result', required=True, type=str,
@@ -135,4 +138,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    predict(args.dataset, args.model, args.result)
+    predict(args.test_data, args.model, args.result)
