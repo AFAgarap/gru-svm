@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
