@@ -15,14 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ==============================================================================
 
-"""Makes batches of examples for training or evaluation"""
+"""Module for data handling in the project"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.2.2'
+__version__ = '0.3.0'
 __author__ = 'Abien Fred Agarap'
 
+import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
 
@@ -100,3 +101,12 @@ def input_pipeline(path, batch_size, num_classes, num_epochs):
     label_batch_onehot = tf.one_hot(tf.cast(label_batch, tf.uint8), num_classes, 1.0, -1.0, name='label_batch_onehot')
 
     return example_batch_onehot, label_batch_onehot
+
+
+def plot_accuracy(data):
+    """Scatter plot the data"""
+    figure = plt.figure()
+    f_axes = figure.add_subplot(111)
+    f_axes.scatter(data[:, 0], data[:, 1])
+    plt.grid()
+    plt.show()
