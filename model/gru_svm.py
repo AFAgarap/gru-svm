@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -79,8 +79,6 @@ class GruSvm:
 
             with tf.name_scope('final_training_ops'):
                 with tf.name_scope('weights'):
-                    # xav_init = tf.contrib.layers.xavier_initializer
-                    # weight = tf.get_variable('weights', shape=[CELL_SIZE, N_CLASSES], initializer=xav_init())
                     weight = tf.get_variable('weights',
                                              initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
                     self.variable_summaries(weight)
