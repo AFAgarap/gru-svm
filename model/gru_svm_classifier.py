@@ -21,10 +21,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
+from data import plot_accuracy
 import numpy as np
 import tensorflow as tf
 
@@ -78,6 +79,8 @@ def predict(test_data, checkpoint_path, result_filename):
             saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
             print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
 
+        accuracy_records = []
+
         try:
             for step in range(test_size // BATCH_SIZE):
 
@@ -114,12 +117,18 @@ def predict(test_data, checkpoint_path, result_filename):
                 print(prediction_and_actual)
                 print('Accuracy : {}'.format(accuracy))
 
+                accuracy_records.append([step, accuracy])
+
                 # save the full array
                 np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
             print('KeyboardInterrupt')
+
+    accuracy_records = np.array(accuracy_records)
+    print('Average test accuracy : {}'.format(np.mean(accuracy_records[:, 1])))
+    plot_accuracy(accuracy_records)
 
 
 def parse_args():
