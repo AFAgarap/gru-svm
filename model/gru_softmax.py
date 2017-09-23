@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -44,12 +44,13 @@ SEQUENCE_LENGTH = 21
 
 class GruSoftmax:
 
-    def __init__(self, train_data, test_data, checkpoint_path, log_path, model_name):
+    def __init__(self, train_data, test_data, checkpoint_path, log_path, model_name, result_path):
         self.train_data = train_data
         self.test_data = test_data
         self.checkpoint_path = checkpoint_path
         self.log_path = log_path
         self.model_name = model_name
+        self.result_path = result_path
 
         def __graph__():
             """Build the inference graph"""
@@ -114,6 +115,7 @@ class GruSoftmax:
             self.state = state
             self.states = states
             self.learning_rate = learning_rate
+            self.predicted_class = predicted_class
             self.accuracy = accuracy
             self.merged = merged
 
@@ -169,8 +171,9 @@ class GruSoftmax:
                                  self.state: current_state,
                                  self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
 
-                    summary, _, epoch_loss, next_state = sess.run([self.merged, self.optimizer, self.loss, self.states],
-                                                                  feed_dict=feed_dict)
+                    summary, _, epoch_loss, predictions, next_state = sess.run([self.merged, self.optimizer, self.loss,
+                                                                                self.predicted_class, self.states],
+                                                                               feed_dict=feed_dict)
 
                     # Display training accuracy every 100 steps and at step 0
                     if step % 100 == 0:
@@ -198,6 +201,14 @@ class GruSoftmax:
                         validation_writer.add_summary(summary, step)
 
                     current_state = next_state
+
+                    # concatenate the predicted labels and actual labels
+                    prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+
+                    # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+                    np.savetxt('{}.csv'.format(os.path.join(self.result_path, step)), X=prediction_and_actual,
+                               fmt='%.1f', delimiter=',', newline='\n')
+
                     step += 1
             except tf.errors.OutOfRangeError:
                 print('EOF -- training done at step {}'.format(step))
@@ -239,6 +250,8 @@ def parse_args():
                        help='path where to save the TensorBoard logs')
     group.add_argument('-m', '--model_name', required=True, type=str,
                        help='filename for the trained model')
+    group.add_argument('-m', '--result_path', required=True, type=str,
+                       help='path where to save the actual and predicted labels')
     arguments = parser.parse_args()
     return arguments
 
@@ -251,7 +264,7 @@ def main(arguments):
                                           num_classes=N_CLASSES, num_epochs=1)
 
     model = GruSoftmax(train_data=train_data, test_data=validation_data, checkpoint_path=arguments.checkpoint_path,
-                       log_path=arguments.log_path, model_name=arguments.model_name)
+                       log_path=arguments.log_path, model_name=arguments.model_name, result_path=arguments.result_path)
 
     model.train()
 
