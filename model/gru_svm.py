@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -123,6 +123,7 @@ class GruSvm:
             self.state = state
             self.states = states
             self.learning_rate = learning_rate
+            self.predicted_class = predicted_class
             self.accuracy = accuracy
             self.merged = merged
 
@@ -173,8 +174,9 @@ class GruSvm:
                                  self.state: current_state,
                                  self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
 
-                    train_summary, _, next_state = sess.run([self.merged, self.optimizer, self.states],
-                                                            feed_dict=feed_dict)
+                    train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
+                                                                          self.predicted_class, self.states],
+                                                                         feed_dict=feed_dict)
 
                     # Display training loss and accuracy every 100 steps and at step 0
                     if step % 100 == 0:
@@ -211,6 +213,14 @@ class GruSvm:
                                                                                         validation_accuracy))
 
                     current_state = next_state
+
+                    # concatenate the predicted labels and actual labels
+                    prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+
+                    # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+                    np.savetxt(os.path.join(self.result_path, 'gru_svm-{}-training.csv'.format(step)),
+                               X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+
                     step += 1
             except tf.errors.OutOfRangeError:
                 print('EOF -- training done at step {}'.format(step))
@@ -249,6 +259,8 @@ def parse_args():
                        help='path where to save the TensorBoard logs')
     group.add_argument('-m', '--model_name', required=True, type=str,
                        help='filename for the trained model')
+    group.add_argument('-r', '--result_path', required=True, type=str,
+                       help='path where to save the actual and predicted labels')
     arguments = parser.parse_args()
     return arguments
 
