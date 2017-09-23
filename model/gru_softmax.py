@@ -207,7 +207,7 @@ class GruSoftmax:
 
                     # save every prediction_and_actual numpy array to a CSV file for analysis purposes
                     np.savetxt(os.path.join(self.result_path, 'gru_softmax-{}-training.csv'.format(step)),
-                               X=prediction_and_actual, fmt='%.1f', delimiter=',', newline='\n')
+                               X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
 
                     step += 1
             except tf.errors.OutOfRangeError:
