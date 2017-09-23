@@ -250,7 +250,7 @@ def parse_args():
                        help='path where to save the TensorBoard logs')
     group.add_argument('-m', '--model_name', required=True, type=str,
                        help='filename for the trained model')
-    group.add_argument('-m', '--result_path', required=True, type=str,
+    group.add_argument('-r', '--result_path', required=True, type=str,
                        help='path where to save the actual and predicted labels')
     arguments = parser.parse_args()
     return arguments
