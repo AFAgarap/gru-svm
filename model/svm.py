@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -215,8 +215,8 @@ def parse_args():
 
 def main(arguments):
 
-    train_features, train_labels, validation_features, validation_labels = data.load_data(
-        train_dataset=arguments.train_dataset, validation_dataset=arguments.validation_dataset)
+    train_features, train_labels = data.load_data(dataset=arguments.train_dataset)
+    validation_features, validation_labels = data.load_data(dataset=arguments.validation_dataset)
 
     train_size = train_features.shape[0]
     validation_size = validation_features.shape[0]
