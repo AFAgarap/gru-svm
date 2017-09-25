@@ -32,7 +32,7 @@ import tensorflow as tf
 import time
 
 # Hyper-parameters
-BATCH_SIZE = 100
+BATCH_SIZE = 256
 HM_EPOCHS = 1
 LEARNING_RATE = 1e-5
 N_CLASSES = 2
@@ -42,9 +42,7 @@ SVM_C = 1
 
 class Svm:
 
-    def __init__(self, train_data, validation_data, checkpoint_path, log_path, model_name):
-        self.train_data = train_data
-        self.validation_data = validation_data
+    def __init__(self, checkpoint_path, log_path, model_name):
         self.checkpoint_path = checkpoint_path
         self.log_path = log_path
         self.model_name = model_name
@@ -110,7 +108,7 @@ class Svm:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self, train_size, test_size):
+    def train(self, train_data, train_size, validation_data, validation_size):
         """Train the model"""
 
         if not os.path.exists(self.checkpoint_path):
@@ -143,15 +141,12 @@ class Svm:
                 # restore the variables
                 saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
-            # coord = tf.train.Coordinator()
-            # threads = tf.train.start_queue_runners(coord=coord)
-
             try:
                 step = 0
                 for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
                     offset = (step * BATCH_SIZE) % train_size
-                    train_example_batch_decoded_ = self.train_data[0][offset:(offset+BATCH_SIZE)]
-                    train_label_batch = self.train_data[1][offset:(offset+BATCH_SIZE)]
+                    train_example_batch_decoded_ = train_data[0][offset:(offset+BATCH_SIZE)]
+                    train_label_batch = train_data[1][offset:(offset+BATCH_SIZE)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch_decoded_, self.y_input: train_label_batch,
@@ -165,13 +160,13 @@ class Svm:
                         print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
                         train_writer.add_summary(summary, step)
                         saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
-                for step in range(HM_EPOCHS * test_size // BATCH_SIZE):
+                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
 
                     # display validation accuracy and loss every 100 steps
                     if step % 100 == 0 and step > 0:
-                        offset = (step * BATCH_SIZE) % test_size
-                        test_example_batch_decoded_ = self.validation_data[0][offset:(offset + BATCH_SIZE)]
-                        test_label_batch = self.validation_data[1][offset:(offset + BATCH_SIZE)]
+                        offset = (step * BATCH_SIZE) % validation_size
+                        test_example_batch_decoded_ = validation_data[0][offset:(offset + BATCH_SIZE)]
+                        test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
 
                         # dictionary for key-value pair input for validation
                         feed_dict = {self.x_input: test_example_batch_decoded_, self.y_input: test_label_batch}
@@ -225,13 +220,12 @@ def main(arguments):
         train_dataset=arguments.train_dataset, validation_dataset=arguments.validation_dataset)
 
     train_size = train_features.shape[0]
-    test_size = validation_features.shape[0]
+    validation_size = validation_features.shape[0]
 
-    model = Svm(train_data=[train_features, train_labels], validation_data=[validation_features, validation_labels],
-                checkpoint_path=arguments.checkpoint_path,
-                log_path=arguments.log_path, model_name=arguments.model_name)
+    model = Svm(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name)
 
-    model.train(train_size=train_size, test_size=test_size)
+    model.train(train_data=[train_features, train_labels], train_size=train_size,
+                validation_data=[validation_features, validation_labels], validation_size=validation_size)
 
 
 if __name__ == '__main__':
