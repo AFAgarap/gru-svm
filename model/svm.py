@@ -142,14 +142,13 @@ class Svm:
                 saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
             try:
-                step = 0
                 for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
                     offset = (step * BATCH_SIZE) % train_size
-                    train_example_batch_decoded_ = train_data[0][offset:(offset+BATCH_SIZE)]
+                    train_feature_batch = train_data[0][offset:(offset+BATCH_SIZE)]
                     train_label_batch = train_data[1][offset:(offset+BATCH_SIZE)]
 
                     # dictionary for key-value pair input for training
-                    feed_dict = {self.x_input: train_example_batch_decoded_, self.y_input: train_label_batch,
+                    feed_dict = {self.x_input: train_feature_batch, self.y_input: train_label_batch,
                                  self.learning_rate: LEARNING_RATE}
 
                     summary, _, epoch_loss = sess.run([self.merged, self.optimizer, self.loss], feed_dict=feed_dict)
@@ -165,11 +164,11 @@ class Svm:
                     # display validation accuracy and loss every 100 steps
                     if step % 100 == 0 and step > 0:
                         offset = (step * BATCH_SIZE) % validation_size
-                        test_example_batch_decoded_ = validation_data[0][offset:(offset + BATCH_SIZE)]
-                        test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
+                        validation_feature_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
+                        validation_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
 
                         # dictionary for key-value pair input for validation
-                        feed_dict = {self.x_input: test_example_batch_decoded_, self.y_input: test_label_batch}
+                        feed_dict = {self.x_input: validation_feature_batch, self.y_input: validation_label_batch}
 
                         summary, test_loss, test_accuracy = sess.run([self.merged, self.loss, self.accuracy],
                                                                      feed_dict=feed_dict)
@@ -177,10 +176,10 @@ class Svm:
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
                         validation_writer.add_summary(summary, step)
 
-            except tf.errors.OutOfRangeError:
-                print('EOF -- training done at step {}'.format(step))
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
+            finally:
+                print('EOF -- training done at step {}'.format(step))
 
             saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
@@ -201,9 +200,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='SVM for Intrusion Detection')
     group = parser.add_argument_group('Arguments')
     group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='path of the training dataset to be used')
+                       help='the NumPy array training dataset (*.npy) to be used')
     group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='path of the validation dataset to be used')
+                       help='the NumPy array validation dataset (*.npy) to be used')
     group.add_argument('-c', '--checkpoint_path', required=True, type=str,
                        help='path where to save the trained model')
     group.add_argument('-l', '--log_path', required=True, type=str,
