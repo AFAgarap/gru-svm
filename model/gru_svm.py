@@ -47,9 +47,7 @@ LEARNING_RATE = 1e-5
 
 class GruSvm:
 
-    def __init__(self, train_data, validation_data, checkpoint_path, log_path, model_name):
-        self.train_data = train_data
-        self.validation_data = validation_data
+    def __init__(self, checkpoint_path, log_path, model_name):
         self.checkpoint_path = checkpoint_path
         self.log_path = log_path
         self.model_name = model_name
@@ -80,7 +78,7 @@ class GruSvm:
             with tf.name_scope('final_training_ops'):
                 with tf.name_scope('weights'):
                     weight = tf.get_variable('weights',
-                                             initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
+                                             initializer=tf.random_normal([BATCH_SIZE, N_CLASSES], stddev=0.01))
                     self.variable_summaries(weight)
                 with tf.name_scope('biases'):
                     bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
@@ -131,7 +129,7 @@ class GruSvm:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self):
+    def train(self, train_data, validation_data, result_path):
         """Train the model"""
 
         if not os.path.exists(path=self.checkpoint_path):
@@ -167,7 +165,7 @@ class GruSvm:
             try:
                 step = 0
                 while not coord.should_stop():
-                    train_example_batch, train_label_batch = sess.run([self.train_data[0], self.train_data[1]])
+                    train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
@@ -195,8 +193,8 @@ class GruSvm:
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
                         # retrieve validation data
-                        test_example_batch, test_label_batch = sess.run([self.validation_data[0],
-                                                                         self.validation_data[1]])
+                        test_example_batch, test_label_batch = sess.run([validation_data[0],
+                                                                         validation_data[1]])
                         # dictionary for key-value pair input for validation
                         feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                      self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
@@ -218,7 +216,7 @@ class GruSvm:
                     prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
 
                     # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    np.savetxt(os.path.join(self.result_path, 'gru_svm-{}-training.csv'.format(step)),
+                    np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
                                X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
 
                     step += 1
@@ -278,11 +276,10 @@ def main(argv):
                                           num_classes=N_CLASSES, num_epochs=1)
 
     # instantiate the model
-    model = GruSvm(train_data=train_data, validation_data=validation_data, checkpoint_path=argv.checkpoint_path,
-                   log_path=argv.log_path, model_name=argv.model_name)
+    model = GruSvm(checkpoint_path=argv.checkpoint_path, log_path=argv.log_path, model_name=argv.model_name)
 
     # train the model
-    model.train()
+    model.train(train_data=train_data, validation_data=validation_data, result_path=argv.result_path)
 
 
 if __name__ == '__main__':
