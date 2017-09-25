@@ -21,10 +21,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
+from data import load_data
 import numpy as np
 import tensorflow as tf
 
@@ -33,25 +34,10 @@ CELL_SIZE = 256
 NUM_CLASSES = 2
 
 
-def predict(test_path, checkpoint_path, result_filename):
+def predict(test_data, checkpoint_path, result_filename):
     """Classifies the data whether there is an attack or none"""
 
-    test_file = test_path + '/24.csv'
-
-    # load the CSV file to numpy array
-    test_example_batch = np.genfromtxt(test_file, delimiter=',')
-
-    # isolate the label to a different numpy array
-    test_label_batch = test_example_batch[:, 17]
-
-    # cast the label array to float32
-    test_label_batch = test_label_batch.astype(np.float32)
-
-    # remove the label from the feature numpy array
-    test_example_batch = np.delete(arr=test_example_batch, obj=[17], axis=1)
-
-    # cast the feature array to float32
-    test_example_batch = test_example_batch.astype(np.float32)
+    test_features, test_labels = load_data(dataset=test_data)
 
     # variables initializer
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
