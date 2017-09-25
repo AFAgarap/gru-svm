@@ -20,10 +20,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Abien Fred Agarap'
 
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 import tensorflow as tf
 
@@ -110,3 +111,31 @@ def plot_accuracy(data):
     f_axes.scatter(data[:, 0], data[:, 1])
     plt.grid()
     plt.show()
+
+
+def load_data(train_dataset, validation_dataset):
+    """Loads the dataset from the specified NumPy array file"""
+
+    # load the train data into the memory
+    train_data = np.load(train_dataset)
+
+    # load the validation data into the memory
+    validation_data = np.load(validation_dataset)
+
+    # get the train labels from the train data
+    train_labels = train_data[:, 17]
+    train_labels = train_labels.astype(np.float32)
+
+    # get the train features from the train data
+    train_data = np.delete(arr=train_data, obj=[17], axis=1)
+    train_data = train_data.astype(np.float32)
+
+    # get the validation labels from the validation data
+    validation_labels = validation_data[:, 17]
+    validation_labels = validation_labels.astype(np.float32)
+
+    # get the validation features from the validation data
+    validation_data = np.delete(arr=validation_data, obj=[17], axis=1)
+    validation_data = validation_data.astype(np.float32)
+
+    return train_data, train_labels, validation_data, validation_labels
