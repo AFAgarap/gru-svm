@@ -93,10 +93,10 @@ def predict(test_data, checkpoint_path, result_path):
                 # save the full array
                 np.savetxt(os.path.join(result_path, 'svm-{}-result.csv'.format(step)), X=prediction_and_actual,
                            fmt='%.1f', delimiter=',', newline='\n')
-        except tf.errors.OutOfRangeError:
-            print('EOF')
         except KeyboardInterrupt:
             print('KeyboardInterrupt at step {}'.format(step))
+        finally:
+            print('Done classifying at step {}'.format(step))
 
 
 def parse_args():
