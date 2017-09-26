@@ -263,9 +263,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='GRU+SVM for Intrusion Detection')
     group = parser.add_argument_group('Arguments')
     group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='path of the training dataset to be used')
+                       help='the NumPy array training dataset (*.npy) to be used')
     group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='path of the validation dataset to be used')
+                       help='the NumPy array validation dataset (*.npy) to be used')
     group.add_argument('-c', '--checkpoint_path', required=True, type=str,
                        help='path where to save the trained model')
     group.add_argument('-l', '--log_path', required=True, type=str,
