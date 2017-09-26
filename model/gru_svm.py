@@ -55,11 +55,15 @@ class GruSvm:
         def __graph__():
             """Build the inference graph"""
             with tf.name_scope('input'):
-                # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
-                x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
+                # [BATCH_SIZE, SEQUENCE_LENGTH]
+                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, SEQUENCE_LENGTH], name='x_input')
+
+                x_onehot = tf.one_hot(indices=x_input, depth=10, on_value=1.0, off_value=0.0, name='x_onehot')
 
                 # [BATCH_SIZE, N_CLASSES]
-                y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
+                y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
+
+                y_onehot = tf.one_hot(indices=y_input, depth=2, on_value=1.0, off_value=-1.0, name='y_onehot')
 
             state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
 
@@ -71,7 +75,7 @@ class GruSvm:
 
             # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
             # states: [BATCH_SIZE, CELL_SIZE]
-            outputs, states = tf.nn.dynamic_rnn(drop_cell, x_input, initial_state=state, dtype=tf.float32)
+            outputs, states = tf.nn.dynamic_rnn(drop_cell, x_onehot, initial_state=state, dtype=tf.float32)
 
             states = tf.identity(states, name='H')
 
@@ -93,7 +97,7 @@ class GruSvm:
             with tf.name_scope('svm'):
                 regularization_loss = 0.5 * tf.reduce_sum(tf.square(weight))
                 hinge_loss = tf.reduce_sum(
-                    tf.square(tf.maximum(tf.zeros([BATCH_SIZE, N_CLASSES]), 1 - y_input * output)))
+                    tf.square(tf.maximum(tf.zeros([BATCH_SIZE, N_CLASSES]), 1 - y_onehot * output)))
                 with tf.name_scope('loss'):
                     loss = regularization_loss + SVM_C * hinge_loss
             tf.summary.scalar('loss', loss)
@@ -104,7 +108,7 @@ class GruSvm:
                 predicted_class = tf.sign(output)
                 predicted_class = tf.identity(predicted_class, name='prediction')
                 with tf.name_scope('correct_prediction'):
-                    correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_input, 1))
+                    correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_onehot, 1))
                 with tf.name_scope('accuracy'):
                     accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
             tf.summary.scalar('accuracy', accuracy)
@@ -129,7 +133,7 @@ class GruSvm:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self, train_data, validation_data, result_path):
+    def train(self, train_data, train_size, validation_data, validation_size, result_path):
         """Train the model"""
 
         if not os.path.exists(path=self.checkpoint_path):
@@ -159,13 +163,18 @@ class GruSvm:
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
                 saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
+            # coord = tf.train.Coordinator()
+            # threads = tf.train.start_queue_runners(coord=coord)
 
             try:
-                step = 0
-                while not coord.should_stop():
-                    train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
+                # step = 0
+                # while not coord.should_stop():
+                #     train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
+                for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
+
+                    offset = (step * BATCH_SIZE) % train_size
+                    train_example_batch = train_data[0][offset:(offset + BATCH_SIZE)]
+                    train_label_batch = train_data[1][offset:(offset + BATCH_SIZE)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
@@ -190,11 +199,19 @@ class GruSvm:
                         # save the model at current step
                         saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
+                    current_state = next_state
+
+                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
+
+                    offset = (step * BATCH_SIZE) % validation_size
+                    test_example_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
+                    test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
+
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
                         # retrieve validation data
-                        test_example_batch, test_label_batch = sess.run([validation_data[0],
-                                                                         validation_data[1]])
+                        # test_example_batch, test_label_batch = sess.run([validation_data[0],
+                        #                                                  validation_data[1]])
                         # dictionary for key-value pair input for validation
                         feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                      self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
@@ -210,24 +227,22 @@ class GruSvm:
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
 
-                    current_state = next_state
-
                     # concatenate the predicted labels and actual labels
-                    prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
-
-                    # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
-                               X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
-
-                    step += 1
-            except tf.errors.OutOfRangeError:
-                print('EOF -- training done at step {}'.format(step))
+                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+                    #
+                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+                    # np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
+                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+            # except tf.errors.OutOfRangeError:
+            #     print('EOF -- training done at step {}'.format(step))
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
-                train_writer.close()
-                coord.request_stop()
-            coord.join(threads)
+                print('EOF -- training done at step {}'.format(step))
+            # finally:
+            #     train_writer.close()
+            #     coord.request_stop()
+            # coord.join(threads)
 
             saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
@@ -267,19 +282,37 @@ def main(argv):
 
     # get the train data
     # features: train_data[0], labels: train_data[1]
-    train_data = data.input_pipeline(path=argv.train_dataset, batch_size=BATCH_SIZE,
-                                     num_classes=N_CLASSES, num_epochs=HM_EPOCHS)
+    # train_data = data.input_pipeline(path=argv.train_dataset, batch_size=BATCH_SIZE,
+    #                                  num_classes=N_CLASSES, num_epochs=HM_EPOCHS)
+
+    train_features, train_labels = data.load_data(dataset=argv.train_dataset)
+    validation_features, validation_labels = data.load_data(dataset=argv.validation_dataset)
+
+    train_size = train_features.shape[0]
+    validation_size = validation_features.shape[0]
+
+    train_features = train_features[:train_size-(train_size % BATCH_SIZE)]
+    train_labels = train_labels[:train_size-(train_size % BATCH_SIZE)]
+
+    train_size = train_features.shape[0]
+
+    validation_features = validation_features[:validation_size-(validation_size % BATCH_SIZE)]
+    validation_labels = validation_labels[:validation_size-(validation_size % BATCH_SIZE)]
+
+    validation_size = validation_features.shape[0]
 
     # get the validation data
     # features: validation_data[0], labels: validation_data[1]
-    validation_data = data.input_pipeline(path=argv.validation_dataset, batch_size=BATCH_SIZE,
-                                          num_classes=N_CLASSES, num_epochs=1)
+    # validation_data = data.input_pipeline(path=argv.validation_dataset, batch_size=BATCH_SIZE,
+    #                                       num_classes=N_CLASSES, num_epochs=1)
 
     # instantiate the model
     model = GruSvm(checkpoint_path=argv.checkpoint_path, log_path=argv.log_path, model_name=argv.model_name)
 
     # train the model
-    model.train(train_data=train_data, validation_data=validation_data, result_path=argv.result_path)
+    model.train(train_data=[train_features, train_labels], train_size=train_size,
+                validation_data=[validation_features, validation_labels], validation_size=validation_size,
+                result_path=argv.result_path)
 
 
 if __name__ == '__main__':
