@@ -62,7 +62,7 @@ class GruSoftmax:
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
                 # [BATCH_SIZE, N_CLASSES]
-                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=-1.0, name='y_onehot')
+                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=0.0, name='y_onehot')
 
             # [BATCH_SIZE, CELL_SIZE]
             state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
@@ -161,51 +161,66 @@ class GruSoftmax:
             try:
                 for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
 
+                    # set the value for slicing
+                    # e.g. step = 0, batch_size = 256, train_size = 1898240
+                    # (0 * 256) % 1898240 = 0
+                    # [offset:(offset + batch_size)] = [0:256]
+                    offset = (step * BATCH_SIZE) % train_size
+                    train_example_batch = train_data[0][offset:(offset + BATCH_SIZE)]
+                    train_label_batch = train_data[1][offset:(offset + BATCH_SIZE)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
                                  self.state: current_state,
                                  self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
 
-                    summary, _, epoch_loss, predictions, next_state = sess.run([self.merged, self.optimizer, self.loss,
-                                                                                self.predicted_class, self.states],
-                                                                               feed_dict=feed_dict)
+                    train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
+                                                                          self.predicted_class, self.states],
+                                                                         feed_dict=feed_dict)
 
                     # Display training accuracy every 100 steps and at step 0
                     if step % 100 == 0:
-                        accuracy_ = sess.run(self.accuracy, feed_dict=feed_dict)
-                        print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
-                        train_writer.add_summary(summary, step)
+                        # get the train loss and accuracy
+                        train_loss, train_accuracy = sess.run([self.loss, self.accuracy], feed_dict=feed_dict)
+
+                        # display train loss and accuracy
+                        print('step [{}] train -- loss : {}, accuracy : {}'.format(step, train_loss, train_accuracy))
+
+                        # write the train summary
+                        train_writer.add_summary(train_summary, step)
+
+                        # save the model at the current step
                         saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
-
-                    # Validate training every 100 steps
-                    if step % 100 == 0 and step > 0:
-                        test_example_batch, test_label_batch = sess.run([self.test_data[0], self.test_data[1]])
-
-                        # change the range of labels for Softmax to {0, 1}
-                        test_label_batch[test_label_batch == -1] = 0
-
-                        # dictionary for key-value pair input for validation
-                        feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
-                                     self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
-
-                        summary, test_loss, test_accuracy = sess.run([self.merged, self.loss, self.accuracy],
-                                                                     feed_dict=feed_dict)
-
-                        print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
-
-                        validation_writer.add_summary(summary, step)
 
                     current_state = next_state
 
-                    # concatenate the predicted labels and actual labels
-                    prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
 
-                    # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    np.savetxt(os.path.join(self.result_path, 'gru_softmax-{}-training.csv'.format(step)),
-                               X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+                    offset = (step * BATCH_SIZE) % validation_size
+                    test_example_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
+                    test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
 
-                    step += 1
+                    # dictionary for key-value pair input for validation
+                    feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
+                                 self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
+
+                    # Validate training every 100 steps
+                    if step % 100 == 0 and step > 0:
+                        validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
+                                                                                             self.accuracy],
+                                                                                            feed_dict=feed_dict)
+
+                        validation_writer.add_summary(validation_summary, step)
+
+                        print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
+                                                                                        validation_accuracy))
+
+                    # # concatenate the predicted labels and actual labels
+                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+                    #
+                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+                    # np.savetxt(os.path.join(self.result_path, 'gru_softmax-{}-training.csv'.format(step)),
+                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
