@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -52,11 +52,17 @@ class GruSoftmax:
         def __graph__():
             """Build the inference graph"""
             with tf.name_scope('input'):
+                # [BATCH_SIZE, SEQUENCE_LENGTH]
+                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, SEQUENCE_LENGTH], name='x_input')
+
                 # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
-                x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH, 10], name='x_input')
+                x_onehot = tf.one_hot(indices=x_input, depth=10, on_value=1.0, off_value=0.0, name='x_onehot')
+
+                # [BATCH_SIZE]
+                y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
                 # [BATCH_SIZE, N_CLASSES]
-                y_input = tf.placeholder(dtype=tf.float32, shape=[None, N_CLASSES], name='y_input')
+                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=-1.0, name='y_onehot')
 
             # [BATCH_SIZE, CELL_SIZE]
             state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
@@ -69,7 +75,7 @@ class GruSoftmax:
 
             # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
             # states: [BATCH_SIZE, CELL_SIZE]
-            outputs, states = tf.nn.dynamic_rnn(drop_cell, x_input, initial_state=state, dtype=tf.float32)
+            outputs, states = tf.nn.dynamic_rnn(drop_cell, x_onehot, initial_state=state, dtype=tf.float32)
 
             states = tf.identity(states, name='H')
 
@@ -89,7 +95,7 @@ class GruSoftmax:
 
             # Softmax
             with tf.name_scope('loss'):
-                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_input))
+                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y_onehot))
             tf.summary.scalar('loss', loss)
 
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -97,7 +103,7 @@ class GruSoftmax:
             with tf.name_scope('accuracy'):
                 predicted_class = tf.nn.softmax(output)
                 with tf.name_scope('correct_prediction'):
-                    correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_input, 1))
+                    correct = tf.equal(tf.argmax(predicted_class, 1), tf.argmax(y_onehot, 1))
                 with tf.name_scope('accuracy'):
                     accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
             tf.summary.scalar('accuracy', accuracy)
