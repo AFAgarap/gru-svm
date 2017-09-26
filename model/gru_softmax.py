@@ -158,16 +158,9 @@ class GruSoftmax:
                 # restore variables to resume training
                 saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
-
             try:
-                step = 0
-                while not coord.should_stop():
-                    train_example_batch, train_label_batch = sess.run([self.train_data[0], self.train_data[1]])
+                for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
 
-                    # changed the range of labels for Softmax to {0, 1}
-                    train_label_batch[train_label_batch == -1] = 0
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
@@ -213,18 +206,11 @@ class GruSoftmax:
                                X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
 
                     step += 1
-            except tf.errors.OutOfRangeError:
-                print('EOF -- training done at step {}'.format(step))
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
-                train_writer.close()
-                validation_writer.close()
-                coord.request_stop()
+                print('EOF -- training done at step {}'.format(step))
 
-            coord.join(threads)
-
-            saver = tf.train.Saver()
             saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
     @staticmethod
