@@ -44,13 +44,10 @@ SEQUENCE_LENGTH = 21
 
 class GruSoftmax:
 
-    def __init__(self, train_data, test_data, checkpoint_path, log_path, model_name, result_path):
-        self.train_data = train_data
-        self.test_data = test_data
+    def __init__(self, checkpoint_path, log_path, model_name):
         self.checkpoint_path = checkpoint_path
         self.log_path = log_path
         self.model_name = model_name
-        self.result_path = result_path
 
         def __graph__():
             """Build the inference graph"""
@@ -123,7 +120,7 @@ class GruSoftmax:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self):
+    def train(self, train_data, train_size, validation_data, validation_size, result_path):
         """Train the model"""
         if not os.path.exists(self.checkpoint_path):
             os.mkdir(self.checkpoint_path)
@@ -241,9 +238,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='GRU+Softmax for Intrusion Detection')
     group = parser.add_argument_group('Arguments')
     group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='path of the training dataset to be used')
+                       help='the NumPy array training dataset (*.npy) to be used')
     group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='path of the validation dataset to be used')
+                       help='the NumPy array validation dataset (*.npy) to be used')
     group.add_argument('-c', '--checkpoint_path', required=True, type=str,
                        help='path where to save the trained model')
     group.add_argument('-l', '--log_path', required=True, type=str,
@@ -263,8 +260,8 @@ def main(arguments):
     validation_data = data.input_pipeline(path=arguments.validation_dataset, batch_size=BATCH_SIZE,
                                           num_classes=N_CLASSES, num_epochs=1)
 
-    model = GruSoftmax(train_data=train_data, test_data=validation_data, checkpoint_path=arguments.checkpoint_path,
-                       log_path=arguments.log_path, model_name=arguments.model_name, result_path=arguments.result_path)
+    model = GruSoftmax(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path,
+                       model_name=arguments.model_name)
 
     model.train()
 
