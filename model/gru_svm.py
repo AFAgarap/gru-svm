@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -58,12 +58,14 @@ class GruSvm:
                 # [BATCH_SIZE, SEQUENCE_LENGTH]
                 x_input = tf.placeholder(dtype=tf.uint8, shape=[None, SEQUENCE_LENGTH], name='x_input')
 
+                # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
                 x_onehot = tf.one_hot(indices=x_input, depth=10, on_value=1.0, off_value=0.0, name='x_onehot')
 
-                # [BATCH_SIZE, N_CLASSES]
+                # [BATCH_SIZE]
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
-                y_onehot = tf.one_hot(indices=y_input, depth=2, on_value=1.0, off_value=-1.0, name='y_onehot')
+                # [BATCH_SIZE, N_CLASSES]
+                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=-1.0, name='y_onehot')
 
             state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
 
@@ -163,15 +165,13 @@ class GruSvm:
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
                 saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
 
-            # coord = tf.train.Coordinator()
-            # threads = tf.train.start_queue_runners(coord=coord)
-
             try:
-                # step = 0
-                # while not coord.should_stop():
-                #     train_example_batch, train_label_batch = sess.run([train_data[0], train_data[1]])
                 for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
 
+                    # set the value for slicing
+                    # e.g. step = 0, batch_size = 256, train_size = 1898240
+                    # (0 * 256) % 1898240 = 0
+                    # [offset:(offset + batch_size)] = [0:256]
                     offset = (step * BATCH_SIZE) % train_size
                     train_example_batch = train_data[0][offset:(offset + BATCH_SIZE)]
                     train_label_batch = train_data[1][offset:(offset + BATCH_SIZE)]
@@ -207,15 +207,12 @@ class GruSvm:
                     test_example_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
                     test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
 
+                    # dictionary for key-value pair input for validation
+                    feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
+                                 self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
+
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
-                        # retrieve validation data
-                        # test_example_batch, test_label_batch = sess.run([validation_data[0],
-                        #                                                  validation_data[1]])
-                        # dictionary for key-value pair input for validation
-                        feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
-                                     self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
-
                         # get validation loss and accuracy
                         validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
                                                                                              self.accuracy],
@@ -233,16 +230,10 @@ class GruSvm:
                     # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
                     # np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
                     #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
-            # except tf.errors.OutOfRangeError:
-            #     print('EOF -- training done at step {}'.format(step))
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
                 print('EOF -- training done at step {}'.format(step))
-            # finally:
-            #     train_writer.close()
-            #     coord.request_stop()
-            # coord.join(threads)
 
             saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
 
