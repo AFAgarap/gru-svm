@@ -41,7 +41,6 @@ def predict(test_data, checkpoint_path, result_path):
     test_features, test_labels = load_data(dataset=test_data)
 
     test_size = test_features.shape[0]
-    print(test_size)
 
     # variables initializer
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
