@@ -282,29 +282,32 @@ def main(argv):
 
     # get the train data
     # features: train_data[0], labels: train_data[1]
-    # train_data = data.input_pipeline(path=argv.train_dataset, batch_size=BATCH_SIZE,
-    #                                  num_classes=N_CLASSES, num_epochs=HM_EPOCHS)
-
     train_features, train_labels = data.load_data(dataset=argv.train_dataset)
-    validation_features, validation_labels = data.load_data(dataset=argv.validation_dataset)
-
-    train_size = train_features.shape[0]
-    validation_size = validation_features.shape[0]
-
-    train_features = train_features[:train_size-(train_size % BATCH_SIZE)]
-    train_labels = train_labels[:train_size-(train_size % BATCH_SIZE)]
-
-    train_size = train_features.shape[0]
-
-    validation_features = validation_features[:validation_size-(validation_size % BATCH_SIZE)]
-    validation_labels = validation_labels[:validation_size-(validation_size % BATCH_SIZE)]
-
-    validation_size = validation_features.shape[0]
 
     # get the validation data
     # features: validation_data[0], labels: validation_data[1]
-    # validation_data = data.input_pipeline(path=argv.validation_dataset, batch_size=BATCH_SIZE,
-    #                                       num_classes=N_CLASSES, num_epochs=1)
+    validation_features, validation_labels = data.load_data(dataset=argv.validation_dataset)
+
+    # get the size of the dataset for slicing
+    train_size = train_features.shape[0]
+    validation_size = validation_features.shape[0]
+
+    # slice the dataset to be exact as per the batch size
+    # e.g. train_size = 1898322, batch_size = 256
+    # [:1898322-(1898322%256)] = [:1898240]
+    # 1898322 // 256 = 7415; 7415 * 256 = 1898240
+    train_features = train_features[:train_size-(train_size % BATCH_SIZE)]
+    train_labels = train_labels[:train_size-(train_size % BATCH_SIZE)]
+
+    # modify the size of the dataset to be passed on model.train()
+    train_size = train_features.shape[0]
+
+    # slice the dataset to be exact as per the batch size
+    validation_features = validation_features[:validation_size-(validation_size % BATCH_SIZE)]
+    validation_labels = validation_labels[:validation_size-(validation_size % BATCH_SIZE)]
+
+    # modify the size of the dataset to be passed on model.train()
+    validation_size = validation_features.shape[0]
 
     # instantiate the model
     model = GruSvm(checkpoint_path=argv.checkpoint_path, log_path=argv.log_path, model_name=argv.model_name)
