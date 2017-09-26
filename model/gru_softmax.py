@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -36,7 +36,7 @@ import time
 BATCH_SIZE = 256
 CELL_SIZE = 256
 DROPOUT_P_KEEP = 0.8
-HM_EPOCHS = 2
+HM_EPOCHS = 4
 LEARNING_RATE = 1e-6
 N_CLASSES = 2
 SEQUENCE_LENGTH = 21
