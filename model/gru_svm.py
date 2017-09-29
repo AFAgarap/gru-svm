@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -33,30 +33,37 @@ import tensorflow as tf
 import time
 
 # hyper-parameters
-BATCH_SIZE = 256
-CELL_SIZE = 256
-DROPOUT_P_KEEP = 0.85
-HM_EPOCHS = 4
-N_CLASSES = 2
-SEQUENCE_LENGTH = 21
-SVM_C = 0.5
+# BATCH_SIZE = 256
+# CELL_SIZE = 256
+# DROPOUT_P_KEEP = 0.85
+# HM_EPOCHS = 4
+# N_CLASSES = 2
+# SEQUENCE_LENGTH = 21
+# SVM_C = 0.5
 
 # learning rate decay parameters
-LEARNING_RATE = 1e-5
+# LEARNING_RATE = 1e-5
 
 
 class GruSvm:
 
-    def __init__(self, checkpoint_path, log_path, model_name):
-        self.checkpoint_path = checkpoint_path
-        self.log_path = log_path
-        self.model_name = model_name
+    def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length, svm_c):
+        self.alpha = alpha
+        self.batch_size = batch_size
+        self.cell_size = cell_size
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.sequence_length = sequence_length
+        self.svm_c = svm_c
+        # self.checkpoint_path = checkpoint_path
+        # self.log_path = log_path
+        # self.model_name = model_name
 
         def __graph__():
             """Build the inference graph"""
             with tf.name_scope('input'):
                 # [BATCH_SIZE, SEQUENCE_LENGTH]
-                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, SEQUENCE_LENGTH], name='x_input')
+                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, self.sequence_length], name='x_input')
 
                 # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
                 x_onehot = tf.one_hot(indices=x_input, depth=10, on_value=1.0, off_value=0.0, name='x_onehot')
@@ -65,14 +72,15 @@ class GruSvm:
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
                 # [BATCH_SIZE, N_CLASSES]
-                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=-1.0, name='y_onehot')
+                y_onehot = tf.one_hot(indices=y_input, depth=self.num_classes, on_value=1.0, off_value=-1.0,
+                                      name='y_onehot')
 
-            state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
+            state = tf.placeholder(dtype=tf.float32, shape=[None, self.cell_size], name='initial_state')
 
             p_keep = tf.placeholder(dtype=tf.float32, name='p_keep')
             learning_rate = tf.placeholder(dtype=tf.float32, name='learning_rate')
 
-            cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
+            cell = tf.contrib.rnn.GRUCell(self.cell_size)
             drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
 
             # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
@@ -84,10 +92,11 @@ class GruSvm:
             with tf.name_scope('final_training_ops'):
                 with tf.name_scope('weights'):
                     weight = tf.get_variable('weights',
-                                             initializer=tf.random_normal([BATCH_SIZE, N_CLASSES], stddev=0.01))
+                                             initializer=tf.random_normal([self.batch_size, self.num_classes],
+                                                                          stddev=0.01))
                     self.variable_summaries(weight)
                 with tf.name_scope('biases'):
-                    bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
+                    bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[self.num_classes]))
                     self.variable_summaries(bias)
                 hf = tf.transpose(outputs, [1, 0, 2])
                 last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
@@ -99,9 +108,9 @@ class GruSvm:
             with tf.name_scope('svm'):
                 regularization_loss = 0.5 * tf.reduce_sum(tf.square(weight))
                 hinge_loss = tf.reduce_sum(
-                    tf.square(tf.maximum(tf.zeros([BATCH_SIZE, N_CLASSES]), 1 - y_onehot * output)))
+                    tf.square(tf.maximum(tf.zeros([self.batch_size, self.num_classes]), 1 - y_onehot * output)))
                 with tf.name_scope('loss'):
-                    loss = regularization_loss + SVM_C * hinge_loss
+                    loss = regularization_loss + self.svm_c * hinge_loss
             tf.summary.scalar('loss', loss)
 
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -135,16 +144,17 @@ class GruSvm:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self, train_data, train_size, validation_data, validation_size, result_path):
+    def train(self, checkpoint_path, log_path, model_name, epochs, train_data, train_size, validation_data,
+              validation_size, result_path):
         """Train the model"""
 
-        if not os.path.exists(path=self.checkpoint_path):
-            os.mkdir(path=self.checkpoint_path)
+        if not os.path.exists(path=checkpoint_path):
+            os.mkdir(path=checkpoint_path)
 
         saver = tf.train.Saver(max_to_keep=1000)
 
         # initialize H (current_state) with values of zeros
-        current_state = np.zeros([BATCH_SIZE, CELL_SIZE])
+        current_state = np.zeros([self.batch_size, self.cell_size])
 
         # variables initializer
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -152,34 +162,34 @@ class GruSvm:
         # get the time tuple
         timestamp = str(time.asctime())
 
-        train_writer = tf.summary.FileWriter(logdir=self.log_path + timestamp + '-training', graph=tf.get_default_graph())
-        validation_writer = tf.summary.FileWriter(logdir=self.log_path + timestamp + '-validation',
+        train_writer = tf.summary.FileWriter(logdir=log_path + timestamp + '-training', graph=tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter(logdir=log_path + timestamp + '-validation',
                                                   graph=tf.get_default_graph())
 
         with tf.Session() as sess:
             sess.run(init_op)
 
-            checkpoint = tf.train.get_checkpoint_state(self.checkpoint_path)
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
             if checkpoint and checkpoint.model_checkpoint_path:
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
-                saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
 
             try:
-                for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
+                for step in range(epochs * train_size // self.batch_size):
 
                     # set the value for slicing
                     # e.g. step = 0, batch_size = 256, train_size = 1898240
                     # (0 * 256) % 1898240 = 0
                     # [offset:(offset + batch_size)] = [0:256]
-                    offset = (step * BATCH_SIZE) % train_size
-                    train_example_batch = train_data[0][offset:(offset + BATCH_SIZE)]
-                    train_label_batch = train_data[1][offset:(offset + BATCH_SIZE)]
+                    offset = (step * self.batch_size) % train_size
+                    train_example_batch = train_data[0][offset:(offset + self.batch_size)]
+                    train_label_batch = train_data[1][offset:(offset + self.batch_size)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
                                  self.state: current_state,
-                                 self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
+                                 self.learning_rate: self.alpha, self.p_keep: self.dropout_rate}
 
                     train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
                                                                           self.predicted_class, self.states],
@@ -197,19 +207,19 @@ class GruSvm:
                         train_writer.add_summary(train_summary, step)
 
                         # save the model at current step
-                        saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+                        saver.save(sess, checkpoint_path + model_name, global_step=step)
 
                     current_state = next_state
 
-                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
+                for step in range(epochs * validation_size // self.batch_size):
 
-                    offset = (step * BATCH_SIZE) % validation_size
-                    test_example_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
-                    test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
+                    offset = (step * self.batch_size) % validation_size
+                    test_example_batch = validation_data[0][offset:(offset + self.batch_size)]
+                    test_label_batch = validation_data[1][offset:(offset + self.batch_size)]
 
                     # dictionary for key-value pair input for validation
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
-                                 self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
+                                 self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
@@ -235,7 +245,7 @@ class GruSvm:
             finally:
                 print('EOF -- training done at step {}'.format(step))
 
-            saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+            saver.save(sess, checkpoint_path + model_name, global_step=step)
 
     @staticmethod
     def variable_summaries(var):
