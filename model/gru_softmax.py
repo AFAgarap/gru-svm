@@ -21,39 +21,32 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 __author__ = 'Abien Fred Agarap'
 
-import argparse
-import data
 import numpy as np
 import os
 import sys
 import tensorflow as tf
 import time
 
-# hyper-parameters
-BATCH_SIZE = 256
-CELL_SIZE = 256
-DROPOUT_P_KEEP = 0.8
-HM_EPOCHS = 4
-LEARNING_RATE = 1e-6
-N_CLASSES = 2
-SEQUENCE_LENGTH = 21
-
 
 class GruSoftmax:
 
-    def __init__(self, checkpoint_path, log_path, model_name):
-        self.checkpoint_path = checkpoint_path
-        self.log_path = log_path
-        self.model_name = model_name
+    def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length, svm_c):
+        self.alpha = alpha
+        self.batch_size = batch_size
+        self.cell_size = cell_size
+        self.dropout_rate = dropout_rate
+        self.num_classes = num_classes
+        self.sequence_length = sequence_length
+        self.svm_c = svm_c
 
         def __graph__():
             """Build the inference graph"""
             with tf.name_scope('input'):
                 # [BATCH_SIZE, SEQUENCE_LENGTH]
-                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, SEQUENCE_LENGTH], name='x_input')
+                x_input = tf.placeholder(dtype=tf.uint8, shape=[None, self.sequence_length], name='x_input')
 
                 # [BATCH_SIZE, SEQUENCE_LENGTH, 10]
                 x_onehot = tf.one_hot(indices=x_input, depth=10, on_value=1.0, off_value=0.0, name='x_onehot')
@@ -62,15 +55,16 @@ class GruSoftmax:
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
                 # [BATCH_SIZE, N_CLASSES]
-                y_onehot = tf.one_hot(indices=y_input, depth=N_CLASSES, on_value=1.0, off_value=0.0, name='y_onehot')
+                y_onehot = tf.one_hot(indices=y_input, depth=self.num_classes, on_value=1.0, off_value=0.0,
+                                      name='y_onehot')
 
             # [BATCH_SIZE, CELL_SIZE]
-            state = tf.placeholder(dtype=tf.float32, shape=[None, CELL_SIZE], name='initial_state')
+            state = tf.placeholder(dtype=tf.float32, shape=[None, self.cell_size], name='initial_state')
 
             learning_rate = tf.placeholder(tf.float32, name='learning_rate')
             p_keep = tf.placeholder(tf.float32, name='p_keep')
 
-            cell = tf.contrib.rnn.GRUCell(CELL_SIZE)
+            cell = tf.contrib.rnn.GRUCell(self.cell_size)
             drop_cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=p_keep)
 
             # outputs: [BATCH_SIZE, SEQUENCE_LENGTH, CELL_SIZE]
@@ -82,10 +76,11 @@ class GruSoftmax:
             with tf.name_scope('final_training_ops'):
                 with tf.name_scope('weights'):
                     weight = tf.get_variable('weights',
-                                             initializer=tf.random_normal([CELL_SIZE, N_CLASSES], stddev=0.01))
+                                             initializer=tf.random_normal([self.cell_size, self.num_classes],
+                                                                          stddev=0.01))
                     self.variable_summaries(weight)
                 with tf.name_scope('biases'):
-                    bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
+                    bias = tf.get_variable('biases', initializer=tf.constant(0.1, shape=[self.num_classes]))
                     self.variable_summaries(bias)
                 hf = tf.transpose(outputs, [1, 0, 2])
                 last = tf.gather(hf, int(hf.get_shape()[0]) - 1)
