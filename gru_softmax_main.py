@@ -25,8 +25,8 @@ __version__ = '0.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-import data
-from gru_softmax import GruSoftmax
+from models.gru_softmax.gru_softmax import GruSoftmax
+from utils import data
 
 # hyper-parameters
 BATCH_SIZE = 256

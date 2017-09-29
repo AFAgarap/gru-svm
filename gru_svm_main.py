@@ -25,8 +25,8 @@ __version__ = '0.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-import data
-from gru_svm import GruSvm
+from utils import data
+from models.gru_svm.gru_svm import GruSvm
 
 # hyper-parameters for the model
 BATCH_SIZE = 256

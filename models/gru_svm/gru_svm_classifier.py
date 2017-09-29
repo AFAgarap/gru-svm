@@ -21,12 +21,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.7'
+__version__ = '0.3.8'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from data import load_data
-from data import plot_accuracy
+from utils.data import load_data
+from utils.data import plot_accuracy
 import numpy as np
 import tensorflow as tf
 
