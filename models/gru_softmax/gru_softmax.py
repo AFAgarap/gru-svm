@@ -123,8 +123,9 @@ class GruSoftmax:
     def train(self, checkpoint_path, log_path, model_name, epochs, train_data, train_size, validation_data,
               validation_size, result_path):
         """Train the model"""
-        if not os.path.exists(self.checkpoint_path):
-            os.mkdir(self.checkpoint_path)
+        
+        if not os.path.exists(checkpoint_path):
+            os.mkdir(checkpoint_path)
 
         saver = tf.train.Saver(max_to_keep=1000)
 
