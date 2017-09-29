@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -239,67 +239,3 @@ class GruSoftmax:
             tf.summary.scalar('max', tf.reduce_max(var))
             tf.summary.scalar('min', tf.reduce_min(var))
             tf.summary.histogram('histogram', var)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='GRU+Softmax for Intrusion Detection')
-    group = parser.add_argument_group('Arguments')
-    group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='the NumPy array training dataset (*.npy) to be used')
-    group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='the NumPy array validation dataset (*.npy) to be used')
-    group.add_argument('-c', '--checkpoint_path', required=True, type=str,
-                       help='path where to save the trained model')
-    group.add_argument('-l', '--log_path', required=True, type=str,
-                       help='path where to save the TensorBoard logs')
-    group.add_argument('-m', '--model_name', required=True, type=str,
-                       help='filename for the trained model')
-    group.add_argument('-r', '--result_path', required=True, type=str,
-                       help='path where to save the actual and predicted labels')
-    arguments = parser.parse_args()
-    return arguments
-
-
-def main(arguments):
-
-    # get the train data
-    # features: train_data[0], labels: train_data[1]
-    train_features, train_labels = data.load_data(dataset=arguments.train_dataset)
-
-    # get the validation data
-    # features: validation_data[0], labels: validation_data[1]
-    validation_features, validation_labels = data.load_data(dataset=arguments.validation_dataset)
-
-    # get the size of the dataset for slicing
-    train_size = train_features.shape[0]
-    validation_size = validation_features.shape[0]
-
-    # slice the dataset to be exact as per the batch size
-    # e.g. train_size = 1898322, batch_size = 256
-    # [:1898322-(1898322%256)] = [:1898240]
-    # 1898322 // 256 = 7415; 7415 * 256 = 1898240
-    train_features = train_features[:train_size-(train_size % BATCH_SIZE)]
-    train_labels = train_labels[:train_size-(train_size % BATCH_SIZE)]
-
-    # modify the size of the dataset to be passed on model.train()
-    train_size = train_features.shape[0]
-
-    # slice the dataset to be exact as per the batch size
-    validation_features = validation_features[:validation_size-(validation_size % BATCH_SIZE)]
-    validation_labels = validation_labels[:validation_size-(validation_size % BATCH_SIZE)]
-
-    # modify the size of the dataset to be passed on model.train()
-    validation_size = validation_features.shape[0]
-
-    model = GruSoftmax(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path,
-                       model_name=arguments.model_name)
-
-    model.train(train_data=[train_features, train_labels], train_size=train_size,
-                validation_data=[validation_features, validation_labels], validation_size=validation_size,
-                result_path=arguments.result_path)
-
-
-if __name__ == '__main__':
-    args = parse_args()
-
-    main(args)
