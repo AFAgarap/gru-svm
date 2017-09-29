@@ -120,53 +120,54 @@ class GruSoftmax:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self, train_data, train_size, validation_data, validation_size, result_path):
+    def train(self, checkpoint_path, log_path, model_name, epochs, train_data, train_size, validation_data,
+              validation_size, result_path):
         """Train the model"""
         if not os.path.exists(self.checkpoint_path):
             os.mkdir(self.checkpoint_path)
 
         saver = tf.train.Saver(max_to_keep=1000)
 
-        current_state = np.zeros([BATCH_SIZE, CELL_SIZE])  # initialize H (current_state) with values of zeros
+        current_state = np.zeros([self.batch_size, self.cell_size])  # initialize H (current_state) with values of zeros
 
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())  # variable initializer
 
         timestamp = str(time.asctime())  # get the time in seconds since the Epoch
 
         # create an event file to contain the TF graph summaries for training
-        train_writer = tf.summary.FileWriter(self.log_path + timestamp + '-training', graph=tf.get_default_graph())
+        train_writer = tf.summary.FileWriter(log_path + timestamp + '-training', graph=tf.get_default_graph())
 
         # create an event file to contain the TF graph summaries for validation
-        validation_writer = tf.summary.FileWriter(self.log_path + timestamp + '-validation', graph=tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter(log_path + timestamp + '-validation', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
 
             sess.run(init_op)
 
-            checkpoint = tf.train.get_checkpoint_state(self.checkpoint_path)
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
             # check if a trained model exists
             if checkpoint and checkpoint.model_checkpoint_path:
                 # load the graph of the trained model
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
                 # restore variables to resume training
-                saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
 
             try:
-                for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
+                for step in range(epochs * train_size // self.batch_size):
 
                     # set the value for slicing
                     # e.g. step = 0, batch_size = 256, train_size = 1898240
                     # (0 * 256) % 1898240 = 0
                     # [offset:(offset + batch_size)] = [0:256]
-                    offset = (step * BATCH_SIZE) % train_size
-                    train_example_batch = train_data[0][offset:(offset + BATCH_SIZE)]
-                    train_label_batch = train_data[1][offset:(offset + BATCH_SIZE)]
+                    offset = (step * self.batch_size) % train_size
+                    train_example_batch = train_data[0][offset:(offset + self.batch_size)]
+                    train_label_batch = train_data[1][offset:(offset + self.batch_size)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_example_batch, self.y_input: train_label_batch,
                                  self.state: current_state,
-                                 self.learning_rate: LEARNING_RATE, self.p_keep: DROPOUT_P_KEEP}
+                                 self.learning_rate: self.alpha, self.p_keep: self.dropout_rate}
 
                     train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
                                                                           self.predicted_class, self.states],
@@ -184,19 +185,19 @@ class GruSoftmax:
                         train_writer.add_summary(train_summary, step)
 
                         # save the model at the current step
-                        saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+                        saver.save(sess, checkpoint_path + model_name, global_step=step)
 
                     current_state = next_state
 
-                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
+                for step in range(epochs * validation_size // self.batch_size):
 
-                    offset = (step * BATCH_SIZE) % validation_size
-                    test_example_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
-                    test_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
+                    offset = (step * self.batch_size) % validation_size
+                    test_example_batch = validation_data[0][offset:(offset + self.batch_size)]
+                    test_label_batch = validation_data[1][offset:(offset + self.batch_size)]
 
                     # dictionary for key-value pair input for validation
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
-                                 self.state: np.zeros([BATCH_SIZE, CELL_SIZE]), self.p_keep: 1.0}
+                                 self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
                     # Validate training every 100 steps
                     if step % 100 == 0 and step > 0:
@@ -220,7 +221,7 @@ class GruSoftmax:
             finally:
                 print('EOF -- training done at step {}'.format(step))
 
-            saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+            saver.save(sess, checkpoint_path + model_name, global_step=step)
 
     @staticmethod
     def variable_summaries(var):
