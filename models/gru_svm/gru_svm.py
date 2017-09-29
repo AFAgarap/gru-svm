@@ -113,6 +113,7 @@ class GruSvm:
             # set class properties
             self.x_input = x_input
             self.y_input = y_input
+            self.y_onehot = y_onehot
             self.p_keep = p_keep
             self.loss = loss
             self.optimizer = optimizer
@@ -194,6 +195,19 @@ class GruSvm:
 
                     current_state = next_state
 
+                    predictions = sess.run(tf.argmax(predictions, 1))
+                    predictions[predictions == 0] = -1
+
+                    self.save_labels(predictions=predictions, actual=train_label_batch, result_path=result_path,
+                                     step=step)
+
+                    # # concatenate the predicted labels and actual labels
+                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
+                    #
+                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+                    # np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
+                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+
                 for step in range(epochs * validation_size // self.batch_size):
 
                     offset = (step * self.batch_size) % validation_size
@@ -204,25 +218,26 @@ class GruSvm:
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                  self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
+                    validation_summary, predictions, actual, validation_loss, validation_accuracy = \
+                        sess.run([self.merged, self.predicted_class, self.y_onehot, self.loss, self.accuracy],
+                                 feed_dict=feed_dict)
+
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
                         # get validation loss and accuracy
-                        validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
-                                                                                             self.accuracy],
-                                                                                            feed_dict=feed_dict)
+                        # validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
+                        #                                                                      self.accuracy],
+                        #                                                                     feed_dict=feed_dict)
 
                         validation_writer.add_summary(validation_summary, step)
 
                         # display validation loss and accuracy
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
+                    predictions[predictions == 0] = -1
 
-                    # concatenate the predicted labels and actual labels
-                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
-                    #
-                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    # np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
-                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
+
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
@@ -241,3 +256,14 @@ class GruSvm:
             tf.summary.scalar('max', tf.reduce_max(var))
             tf.summary.scalar('min', tf.reduce_min(var))
             tf.summary.histogram('histogram', var)
+
+    @staticmethod
+    def save_labels(predictions, actual, result_path, step):
+        """Saves the actual and predicted labels to a CSV file"""
+
+        # concatenate the predicted labels and actual labels
+        prediction_and_actual = np.concatenate((predictions, actual), axis=1)
+
+        # save every prediction_and_actual numpy array to a CSV file for analysis purposes
+        np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
+                   X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
