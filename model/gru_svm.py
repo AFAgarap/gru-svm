@@ -75,7 +75,7 @@ class GruSvm:
             with tf.name_scope('final_training_ops'):
                 with tf.name_scope('weights'):
                     weight = tf.get_variable('weights',
-                                             initializer=tf.random_normal([self.batch_size, self.num_classes],
+                                             initializer=tf.random_normal([self.cell_size, self.num_classes],
                                                                           stddev=0.01))
                     self.variable_summaries(weight)
                 with tf.name_scope('biases'):
