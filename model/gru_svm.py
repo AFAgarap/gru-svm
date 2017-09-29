@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ==============================================================================
 
-"""Implementation of the GRU+SVM model for Intrusion Detection"""
+"""Implementation of the GRU+SVM model"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -24,25 +24,11 @@ from __future__ import print_function
 __version__ = '0.3.6'
 __author__ = 'Abien Fred Agarap'
 
-import argparse
-import data
 import numpy as np
 import os
 import sys
 import tensorflow as tf
 import time
-
-# hyper-parameters
-# BATCH_SIZE = 256
-# CELL_SIZE = 256
-# DROPOUT_P_KEEP = 0.85
-# HM_EPOCHS = 4
-# N_CLASSES = 2
-# SEQUENCE_LENGTH = 21
-# SVM_C = 0.5
-
-# learning rate decay parameters
-# LEARNING_RATE = 1e-5
 
 
 class GruSvm:
@@ -55,9 +41,6 @@ class GruSvm:
         self.num_classes = num_classes
         self.sequence_length = sequence_length
         self.svm_c = svm_c
-        # self.checkpoint_path = checkpoint_path
-        # self.log_path = log_path
-        # self.model_name = model_name
 
         def __graph__():
             """Build the inference graph"""
@@ -258,68 +241,3 @@ class GruSvm:
             tf.summary.scalar('max', tf.reduce_max(var))
             tf.summary.scalar('min', tf.reduce_min(var))
             tf.summary.histogram('histogram', var)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='GRU+SVM for Intrusion Detection')
-    group = parser.add_argument_group('Arguments')
-    group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='the NumPy array training dataset (*.npy) to be used')
-    group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='the NumPy array validation dataset (*.npy) to be used')
-    group.add_argument('-c', '--checkpoint_path', required=True, type=str,
-                       help='path where to save the trained model')
-    group.add_argument('-l', '--log_path', required=True, type=str,
-                       help='path where to save the TensorBoard logs')
-    group.add_argument('-m', '--model_name', required=True, type=str,
-                       help='filename for the trained model')
-    group.add_argument('-r', '--result_path', required=True, type=str,
-                       help='path where to save the actual and predicted labels')
-    arguments = parser.parse_args()
-    return arguments
-
-
-def main(argv):
-
-    # get the train data
-    # features: train_data[0], labels: train_data[1]
-    train_features, train_labels = data.load_data(dataset=argv.train_dataset)
-
-    # get the validation data
-    # features: validation_data[0], labels: validation_data[1]
-    validation_features, validation_labels = data.load_data(dataset=argv.validation_dataset)
-
-    # get the size of the dataset for slicing
-    train_size = train_features.shape[0]
-    validation_size = validation_features.shape[0]
-
-    # slice the dataset to be exact as per the batch size
-    # e.g. train_size = 1898322, batch_size = 256
-    # [:1898322-(1898322%256)] = [:1898240]
-    # 1898322 // 256 = 7415; 7415 * 256 = 1898240
-    train_features = train_features[:train_size-(train_size % BATCH_SIZE)]
-    train_labels = train_labels[:train_size-(train_size % BATCH_SIZE)]
-
-    # modify the size of the dataset to be passed on model.train()
-    train_size = train_features.shape[0]
-
-    # slice the dataset to be exact as per the batch size
-    validation_features = validation_features[:validation_size-(validation_size % BATCH_SIZE)]
-    validation_labels = validation_labels[:validation_size-(validation_size % BATCH_SIZE)]
-
-    # modify the size of the dataset to be passed on model.train()
-    validation_size = validation_features.shape[0]
-
-    # instantiate the model
-    model = GruSvm(checkpoint_path=argv.checkpoint_path, log_path=argv.log_path, model_name=argv.model_name)
-
-    # train the model
-    model.train(train_data=[train_features, train_labels], train_size=train_size,
-                validation_data=[validation_features, validation_labels], validation_size=validation_size,
-                result_path=argv.result_path)
-
-
-if __name__ == '__main__':
-    args = parse_args()
-
-    main(argv=args)
