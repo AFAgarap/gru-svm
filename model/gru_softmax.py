@@ -33,14 +33,13 @@ import time
 
 class GruSoftmax:
 
-    def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length, svm_c):
+    def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length):
         self.alpha = alpha
         self.batch_size = batch_size
         self.cell_size = cell_size
         self.dropout_rate = dropout_rate
         self.num_classes = num_classes
         self.sequence_length = sequence_length
-        self.svm_c = svm_c
 
         def __graph__():
             """Build the inference graph"""
