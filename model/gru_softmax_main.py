@@ -28,6 +28,15 @@ import argparse
 import data
 from gru_softmax import GruSoftmax
 
+# hyper-parameters
+BATCH_SIZE = 256
+CELL_SIZE = 256
+DROPOUT_P_KEEP = 0.8
+HM_EPOCHS = 4
+LEARNING_RATE = 1e-6
+N_CLASSES = 2
+SEQUENCE_LENGTH = 21
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='GRU+Softmax for Intrusion Detection')
@@ -79,10 +88,11 @@ def main(arguments):
     # modify the size of the dataset to be passed on model.train()
     validation_size = validation_features.shape[0]
 
-    model = GruSoftmax(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path,
-                       model_name=arguments.model_name)
+    model = GruSoftmax(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, cell_size=CELL_SIZE, dropout_rate=DROPOUT_P_KEEP,
+                       num_classes=N_CLASSES, sequence_length=SEQUENCE_LENGTH)
 
-    model.train(train_data=[train_features, train_labels], train_size=train_size,
+    model.train(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name,
+                epochs=HM_EPOCHS, train_data=[train_features, train_labels], train_size=train_size,
                 validation_data=[validation_features, validation_labels], validation_size=validation_size,
                 result_path=arguments.result_path)
 
