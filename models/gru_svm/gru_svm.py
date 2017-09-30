@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.7'
+__version__ = '0.3.8'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -253,5 +253,5 @@ class GruSvm:
         labels = np.concatenate((predictions, actual), axis=1)
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-        np.savetxt(os.path.join(result_path, 'gru_svm-{}-{}.csv'.format(step, phase)),
-                   X=labels, fmt='%.1f', delimiter=',', newline='\n')
+        np.savetxt(os.path.join(result_path, '{}-gru_svm-{}.csv'.format(phase, step)),
+                   X=labels, fmt='%d', delimiter=',', newline='\n')
