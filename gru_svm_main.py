@@ -32,7 +32,7 @@ from models.gru_svm.gru_svm import GruSvm
 BATCH_SIZE = 256
 CELL_SIZE = 256
 DROPOUT_P_KEEP = 0.85
-HM_EPOCHS = 4
+HM_EPOCHS = 10
 LEARNING_RATE = 1e-5
 N_CLASSES = 2
 SEQUENCE_LENGTH = 21
