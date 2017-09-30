@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ==============================================================================
 
-"""Implementation of the GRU+SVM model for Intrusion Detection"""
+"""Displays the summary of results"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
