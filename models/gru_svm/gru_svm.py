@@ -196,7 +196,8 @@ class GruSvm:
 
                     current_state = next_state
 
-                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
+                                     phase='training')
 
                 for step in range(epochs * validation_size // self.batch_size):
 
@@ -222,7 +223,8 @@ class GruSvm:
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
 
-                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
+                                     phase='validation')
 
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
@@ -244,12 +246,12 @@ class GruSvm:
             tf.summary.histogram('histogram', var)
 
     @staticmethod
-    def save_labels(predictions, actual, result_path, step):
+    def save_labels(predictions, actual, result_path, step, phase):
         """Saves the actual and predicted labels to a CSV file"""
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-        np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
+        np.savetxt(os.path.join(result_path, 'gru_svm-{}-{}.csv'.format(step, phase)),
                    X=labels, fmt='%.1f', delimiter=',', newline='\n')
