@@ -248,4 +248,4 @@ class GruSoftmax:
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
         np.savetxt(os.path.join(result_path, '{}-gru_softmax-{}.csv'.format(phase, step)),
-                   X=labels, fmt='%d', delimiter=',', newline='\n')
+                   X=labels, fmt='%.8f', delimiter=',', newline='\n')
