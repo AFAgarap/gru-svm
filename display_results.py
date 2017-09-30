@@ -35,15 +35,16 @@ TRAINING_RESULTS_PATH = '/home/darth/GitHub Projects/gru_svm/results/gru_svm/tra
 VALIDATION_RESULTS_PATH = '/home/darth/GitHub Projects/gru_svm/results/gru_svm/validation'
 
 
-def view_results(path):
+def view_results(phase, path):
     files = list_files(path=path)
 
     df = pd.DataFrame()
 
     for file in files:
         df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
-        print('appending {}'.format(file))
-        
+
+    print('Done appending CSV files.')
+
     results = np.array(df)
 
     predictions = results[:, :2]
@@ -66,10 +67,14 @@ def view_results(path):
     print('True positive : {}'.format(conf[1][1]))
     print('False positive : {}'.format(conf[0][1]))
 
+    accuracy = (conf[0][0] + conf[1][1]) / results.shape[0]
+
+    print('{} accuracy : {}'.format(phase, accuracy))
+
 
 def main():
-    view_results(TRAINING_RESULTS_PATH)
-    view_results(VALIDATION_RESULTS_PATH)
+    view_results(phase='Training', path=TRAINING_RESULTS_PATH)
+    view_results(phase='Validation', path=VALIDATION_RESULTS_PATH)
 
 
 if __name__ == '__main__':
