@@ -195,19 +195,19 @@ class GruSvm:
 
                     current_state = next_state
 
+                    # get the index of the largest value in the tensor
+                    # e.g. [1, -1] : index 0
                     predictions = sess.run(tf.argmax(predictions, 1))
+
+                    # index 0 means the negative class
                     predictions[predictions == 0] = -1
+
+                    # 0 means the negative class
                     train_label_batch[train_label_batch == 0] = -1
 
+                    # save the predicted and actual labels to a file, for analysis purposes later
                     self.save_labels(predictions=predictions, actual=train_label_batch, result_path=result_path,
                                      step=step)
-
-                    # # concatenate the predicted labels and actual labels
-                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
-                    #
-                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    # np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
-                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
 
                 for step in range(epochs * validation_size // self.batch_size):
 
@@ -224,20 +224,24 @@ class GruSvm:
 
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
-                        # get validation loss and accuracy
-                        # validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
-                        #                                                                      self.accuracy],
-                        #                                                                     feed_dict=feed_dict)
 
+                        # add the validation summary
                         validation_writer.add_summary(validation_summary, step)
 
                         # display validation loss and accuracy
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
+                    # get the index of the largest value in the tensor
+                    # e.g. [1, -1] : index 0
                     predictions = sess.run(tf.argmax(predictions, 1))
+
+                    # index 0 means the negative class
                     predictions[predictions == 0] = -1
+
+                    # 0 means the negative class
                     test_label_batch[test_label_batch == 0] = -1
 
+                    # save the predicted and actual labels to a file, for analysis purposes later
                     self.save_labels(predictions=predictions, actual=test_label_batch, result_path=result_path,
                                      step=step)
 
