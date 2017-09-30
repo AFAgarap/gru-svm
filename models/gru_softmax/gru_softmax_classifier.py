@@ -21,12 +21,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.7'
+__version__ = '0.3.8'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from data import load_data
-from data import plot_accuracy
+from gru_softmax.gru_softmax import GruSoftmax
+from utils.data import load_data
+from utils.data import plot_accuracy
 import numpy as np
 import tensorflow as tf
 
@@ -37,7 +38,7 @@ NUM_BIN = 10
 NUM_CLASSES = 2
 
 
-def predict(test_data, checkpoint_path, result_filename):
+def predict(test_data, checkpoint_path, result_path):
     """Classifies the data whether there is an attack or none"""
 
     # load the test data
@@ -95,26 +96,33 @@ def predict(test_data, checkpoint_path, result_filename):
                 accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
                 accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
 
+                GruSoftmax.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, step=step,
+                                       phase='testing')
+
+                print('step [{}] test -- accuracy : {}'.format(step, accuracy))
+
                 # concatenate the actual labels to the predicted labels
-                prediction_and_actual = np.concatenate((predictions, y_onehot), axis=1)
+                # prediction_and_actual = np.concatenate((predictions, y_onehot), axis=1)
 
-                # print the full array, may be set to np.nan
-                np.set_printoptions(threshold=np.inf)
-                print(prediction_and_actual)
-                print('Accuracy : {}'.format(accuracy))
-
-                accuracy_records.append([step, accuracy])
-
-                # save the full array
-                np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
+                # # print the full array, may be set to np.nan
+                # np.set_printoptions(threshold=np.inf)
+                # print(prediction_and_actual)
+                # print('Accuracy : {}'.format(accuracy))
+                #
+                # accuracy_records.append([step, accuracy])
+                #
+                # # save the full array
+                # np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
             print('KeyboardInterrupt')
+        finally:
+            print('EOF -- testing done at step {}'.format(step))
 
-    accuracy_records = np.array(accuracy_records)
-    print('Average test accuracy : {}'.format(np.mean(accuracy_records[:, 1])))
-    plot_accuracy(accuracy_records)
+    # accuracy_records = np.array(accuracy_records)
+    # print('Average test accuracy : {}'.format(np.mean(accuracy_records[:, 1])))
+    # plot_accuracy(accuracy_records)
 
 
 def parse_args():
@@ -124,7 +132,7 @@ def parse_args():
                        help='the NumPy array test data (*.npy) to be classified')
     group.add_argument('-m', '--model', required=True, type=str,
                        help='path of the trained model')
-    group.add_argument('-r', '--result', required=True, type=str,
+    group.add_argument('-r', '--result_path', required=True, type=str,
                        help='path where to save the results')
     arguments = parser.parse_args()
     return arguments
@@ -133,4 +141,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    predict(args.test_data, args.model, args.result)
+    predict(args.test_data, args.model, args.result_path)
