@@ -1,6 +1,7 @@
 A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection
 ===
 
+![](https://img.shields.io/badge/DOI-cs.NE%2F1709.03082-blue.svg)
 [![AUR](https://img.shields.io/aur/license/yaourt.svg)]()
 [![JIRA sprint completion](https://img.shields.io/badge/completion-90-orange.svg)]()
 
