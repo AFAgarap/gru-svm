@@ -237,15 +237,12 @@ class GruSoftmax:
             tf.summary.histogram('histogram', var)
 
     @staticmethod
-    def save_labels(predictions, actual, result_path, step):
+    def save_labels(predictions, actual, result_path, step, phase):
         """Saves the actual and predicted labels to a CSV file"""
 
-        # concatenate the predicted labels and actual labels
-        prediction_and_actual = np.array([predictions, actual], dtype=np.int8)
-
-        # transpose the axes
-        prediction_and_actual = prediction_and_actual.T
+        # Concatenate the predicted and actual labels
+        labels = np.concatenate((predictions, actual), axis=1)
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-        np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
-                   X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+        np.savetxt(os.path.join(result_path, '{}-gru_svm-{}.csv'.format(phase, step)),
+                   X=labels, fmt='%d', delimiter=',', newline='\n')
