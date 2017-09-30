@@ -175,9 +175,10 @@ class GruSvm:
                                  self.state: current_state,
                                  self.learning_rate: self.alpha, self.p_keep: self.dropout_rate}
 
-                    train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
-                                                                          self.predicted_class, self.states],
-                                                                         feed_dict=feed_dict)
+                    train_summary, _, predictions, actual, next_state = sess.run([self.merged, self.optimizer,
+                                                                                  self.predicted_class, self.y_onehot,
+                                                                                  self.states],
+                                                                                 feed_dict=feed_dict)
 
                     # Display training loss and accuracy every 100 steps and at step 0
                     if step % 100 == 0:
@@ -195,19 +196,7 @@ class GruSvm:
 
                     current_state = next_state
 
-                    # get the index of the largest value in the tensor
-                    # e.g. [1, -1] : index 0
-                    predictions = sess.run(tf.argmax(predictions, 1))
-
-                    # index 0 means the negative class
-                    predictions[predictions == 0] = -1
-
-                    # 0 means the negative class
-                    train_label_batch[train_label_batch == 0] = -1
-
-                    # save the predicted and actual labels to a file, for analysis purposes later
-                    self.save_labels(predictions=predictions, actual=train_label_batch, result_path=result_path,
-                                     step=step)
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
 
                 for step in range(epochs * validation_size // self.batch_size):
 
@@ -219,8 +208,9 @@ class GruSvm:
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                  self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
-                    validation_summary, predictions, validation_loss, validation_accuracy = \
-                        sess.run([self.merged, self.predicted_class, self.loss, self.accuracy], feed_dict=feed_dict)
+                    validation_summary, predictions, actual, validation_loss, validation_accuracy = \
+                        sess.run([self.merged, self.predicted_class, self.y_onehot, self.loss, self.accuracy],
+                                 feed_dict=feed_dict)
 
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
@@ -231,19 +221,8 @@ class GruSvm:
                         # display validation loss and accuracy
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
-                    # get the index of the largest value in the tensor
-                    # e.g. [1, -1] : index 0
-                    predictions = sess.run(tf.argmax(predictions, 1))
 
-                    # index 0 means the negative class
-                    predictions[predictions == 0] = -1
-
-                    # 0 means the negative class
-                    test_label_batch[test_label_batch == 0] = -1
-
-                    # save the predicted and actual labels to a file, for analysis purposes later
-                    self.save_labels(predictions=predictions, actual=test_label_batch, result_path=result_path,
-                                     step=step)
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
 
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
@@ -268,12 +247,9 @@ class GruSvm:
     def save_labels(predictions, actual, result_path, step):
         """Saves the actual and predicted labels to a CSV file"""
 
-        # concatenate the predicted labels and actual labels
-        prediction_and_actual = np.array([predictions, actual], dtype=np.int8)
-
-        # transpose the axes
-        prediction_and_actual = prediction_and_actual.T
+        # Concatenate the predicted and actual labels
+        labels = np.concatenate((predictions, actual), axis=1)
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
         np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
-                   X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+                   X=labels, fmt='%.1f', delimiter=',', newline='\n')
