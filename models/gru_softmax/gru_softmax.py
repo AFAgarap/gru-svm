@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.6'
+__version__ = '0.3.7'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -170,9 +170,10 @@ class GruSoftmax:
                                  self.state: current_state,
                                  self.learning_rate: self.alpha, self.p_keep: self.dropout_rate}
 
-                    train_summary, _, predictions, next_state = sess.run([self.merged, self.optimizer,
-                                                                          self.predicted_class, self.states],
-                                                                         feed_dict=feed_dict)
+                    train_summary, _, predictions, actual, next_state = sess.run([self.merged, self.optimizer,
+                                                                                  self.predicted_class, self.y_onehot,
+                                                                                  self.states],
+                                                                                 feed_dict=feed_dict)
 
                     # Display training accuracy every 100 steps and at step 0
                     if step % 100 == 0:
@@ -190,6 +191,9 @@ class GruSoftmax:
 
                     current_state = next_state
 
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
+                                     phase='training')
+
                 for step in range(epochs * validation_size // self.batch_size):
 
                     offset = (step * self.batch_size) % validation_size
@@ -200,23 +204,21 @@ class GruSoftmax:
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                  self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
+                    validation_summary, predictions, actual, validation_loss, validation_accuracy = \
+                        sess.run([self.merged, self.predicted_class, self.y_onehot, self.loss, self.accuracy],
+                                 feed_dict=feed_dict)
+
                     # Validate training every 100 steps
                     if step % 100 == 0 and step > 0:
-                        validation_summary, validation_loss, validation_accuracy = sess.run([self.merged, self.loss,
-                                                                                             self.accuracy],
-                                                                                            feed_dict=feed_dict)
 
+                        # add the validation summary
                         validation_writer.add_summary(validation_summary, step)
 
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
 
-                    # # concatenate the predicted labels and actual labels
-                    # prediction_and_actual = np.concatenate((predictions, train_label_batch), axis=1)
-                    #
-                    # # save every prediction_and_actual numpy array to a CSV file for analysis purposes
-                    # np.savetxt(os.path.join(self.result_path, 'gru_softmax-{}-training.csv'.format(step)),
-                    #            X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
+                                     phase='validation')
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
