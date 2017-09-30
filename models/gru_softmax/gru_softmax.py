@@ -106,6 +106,7 @@ class GruSoftmax:
 
             self.x_input = x_input
             self.y_input = y_input
+            self.y_onehot = y_onehot
             self.p_keep = p_keep
             self.loss = loss
             self.optimizer = optimizer
