@@ -271,6 +271,9 @@ class GruSvm:
         # concatenate the predicted labels and actual labels
         prediction_and_actual = np.array([predictions, actual], dtype=np.int8)
 
+        # transpose the axes
+        prediction_and_actual = prediction_and_actual.T
+
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
         np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
                    X=prediction_and_actual, fmt='%.3f', delimiter=',', newline='\n')
