@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.6'
+__version__ = '0.3.7'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -197,6 +197,7 @@ class GruSvm:
 
                     predictions = sess.run(tf.argmax(predictions, 1))
                     predictions[predictions == 0] = -1
+                    train_label_batch[train_label_batch == 0] = -1
 
                     self.save_labels(predictions=predictions, actual=train_label_batch, result_path=result_path,
                                      step=step)
@@ -218,9 +219,8 @@ class GruSvm:
                     feed_dict = {self.x_input: test_example_batch, self.y_input: test_label_batch,
                                  self.state: np.zeros([self.batch_size, self.cell_size]), self.p_keep: 1.0}
 
-                    validation_summary, predictions, actual, validation_loss, validation_accuracy = \
-                        sess.run([self.merged, self.predicted_class, self.y_onehot, self.loss, self.accuracy],
-                                 feed_dict=feed_dict)
+                    validation_summary, predictions, validation_loss, validation_accuracy = \
+                        sess.run([self.merged, self.predicted_class, self.loss, self.accuracy], feed_dict=feed_dict)
 
                     # Display validation loss and accuracy every 100 steps
                     if step % 100 == 0 and step > 0:
@@ -234,9 +234,12 @@ class GruSvm:
                         # display validation loss and accuracy
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, validation_loss,
                                                                                         validation_accuracy))
+                    predictions = sess.run(tf.argmax(predictions, 1))
                     predictions[predictions == 0] = -1
+                    test_label_batch[test_label_batch == 0] = -1
 
-                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step)
+                    self.save_labels(predictions=predictions, actual=test_label_batch, result_path=result_path,
+                                     step=step)
 
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
@@ -262,7 +265,7 @@ class GruSvm:
         """Saves the actual and predicted labels to a CSV file"""
 
         # concatenate the predicted labels and actual labels
-        prediction_and_actual = np.concatenate((predictions, actual), axis=1)
+        prediction_and_actual = np.array([predictions, actual], dtype=np.int8)
 
         # save every prediction_and_actual numpy array to a CSV file for analysis purposes
         np.savetxt(os.path.join(result_path, 'gru_svm-{}-training.csv'.format(step)),
