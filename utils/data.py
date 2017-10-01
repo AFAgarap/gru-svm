@@ -20,13 +20,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 __author__ = 'Abien Fred Agarap'
 
 from dataset.normalize_data import list_files
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
 
