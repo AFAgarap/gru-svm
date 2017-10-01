@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __author__ = 'Abien Fred Agarap'
 
 from dataset.normalize_data import list_files
@@ -69,6 +69,10 @@ def plot_confusion_matrix(phase, path, class_names):
     # store all the results to dataframe
     for file in files:
         df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
+
+        # display a notification whenever 20% of the files are appended
+        if (files.index(file) / files.__len__()) % 0.2 == 0:
+            print('done appending {}'.format(files.index(file) / files.__len__()))
 
     print('Done appending CSV files.')
 
