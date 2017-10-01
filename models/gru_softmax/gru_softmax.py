@@ -241,7 +241,7 @@ class GruSoftmax:
 
     @staticmethod
     def save_labels(predictions, actual, result_path, step, phase):
-        """Saves the actual and predicted labels to a CSV file"""
+        """Saves the actual and predicted labels to a NPY file"""
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
