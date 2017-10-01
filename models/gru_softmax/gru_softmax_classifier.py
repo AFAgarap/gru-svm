@@ -21,13 +21,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from gru_softmax.gru_softmax import GruSoftmax
+from gru_softmax import GruSoftmax
 from utils.data import load_data
-from utils.data import plot_accuracy
 import numpy as np
 import tensorflow as tf
 
@@ -67,8 +66,6 @@ def predict(test_data, checkpoint_path, result_path):
             saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
             print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
 
-        accuracy_records = []
-
         try:
             for step in range(test_size // BATCH_SIZE):
 
@@ -99,30 +96,15 @@ def predict(test_data, checkpoint_path, result_path):
                 GruSoftmax.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, step=step,
                                        phase='testing')
 
-                print('step [{}] test -- accuracy : {}'.format(step, accuracy))
+                if step % 100 == 0 and step > 0:
+                    print('step [{}] test -- accuracy : {}'.format(step, accuracy))
 
-                # concatenate the actual labels to the predicted labels
-                # prediction_and_actual = np.concatenate((predictions, y_onehot), axis=1)
-
-                # # print the full array, may be set to np.nan
-                # np.set_printoptions(threshold=np.inf)
-                # print(prediction_and_actual)
-                # print('Accuracy : {}'.format(accuracy))
-                #
-                # accuracy_records.append([step, accuracy])
-                #
-                # # save the full array
-                # np.savetxt(result_filename, X=prediction_and_actual, fmt='%.8f', delimiter=',', newline='\n')
         except tf.errors.OutOfRangeError:
             print('EOF')
         except KeyboardInterrupt:
             print('KeyboardInterrupt')
         finally:
             print('EOF -- testing done at step {}'.format(step))
-
-    # accuracy_records = np.array(accuracy_records)
-    # print('Average test accuracy : {}'.format(np.mean(accuracy_records[:, 1])))
-    # plot_accuracy(accuracy_records)
 
 
 def parse_args():
