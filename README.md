@@ -12,14 +12,11 @@ Recurrent neural networks (RNNs) is a kind of machine learning algorithm used fo
 
 ## Citation
 ```
-@online{agarap2017/online,
-	author={Abien Fred Agarap}
-	title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection in Network Traffic Data},
-	date={2017-09-10},
-	year={2017},
-	eprintclass={cs.NE},
-	eprinttype={arXiV},
-	eprint={cs.NE/1709.03082},
+@article{agarap2017neural,
+  title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection in Network Traffic Data},
+  author={Agarap, Abien Fred},
+  journal={arXiv preprint arXiv:1709.03082},
+  year={2017}
 }
 ```
 
