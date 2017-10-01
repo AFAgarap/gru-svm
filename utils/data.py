@@ -63,17 +63,6 @@ def plot_confusion_matrix(phase, path, class_names):
     # list all the results files
     files = list_files(path=path)
 
-    # dataframe to store the results
-    # df = pd.DataFrame()
-    #
-    # # store all the results to dataframe
-    # for file in files:
-    #     df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
-    #
-    #     # display a notification whenever 20% of the files are appended
-    #     if (files.index(file) / files.__len__()) % 0.2 == 0:
-    #         print('done appending {}'.format(files.index(file) / files.__len__()))
-
     labels = np.array([])
 
     for file in files:
@@ -87,14 +76,11 @@ def plot_confusion_matrix(phase, path, class_names):
 
     print('Done appending CSV files.')
 
-    # convert to numpy array
-    results = np.array(labels)
-
     # get the predicted labels
-    predictions = results[:, :2]
+    predictions = labels[:, :2]
 
     # get the actual labels
-    actual = results[:, 2:]
+    actual = labels[:, 2:]
 
     # create a TensorFlow session
     with tf.Session() as sess:
@@ -127,7 +113,7 @@ def plot_confusion_matrix(phase, path, class_names):
     plt.show()
 
     # get the accuracy of the phase
-    accuracy = (conf[0][0] + conf[1][1]) / results.shape[0]
+    accuracy = (conf[0][0] + conf[1][1]) / labels.shape[0]
 
     # return the confusion matrix and the accuracy
     return conf, accuracy
