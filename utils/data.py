@@ -20,11 +20,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.4.2'
+__version__ = '0.5.0'
 __author__ = 'Abien Fred Agarap'
 
+from dataset.normalize_data import list_files
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+import tensorflow as tf
 
 
 def plot_accuracy(data):
@@ -51,3 +55,64 @@ def load_data(dataset):
     data = data.astype(np.float32)
 
     return data, labels
+
+
+def plot_confusion_matrix(phase, path, class_names):
+    """Plots the confusion matrix"""
+
+    # list all the results files
+    files = list_files(path=path)
+
+    # dataframe to store the results
+    df = pd.DataFrame()
+
+    # store all the results to dataframe
+    for file in files:
+        df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
+
+    print('Done appending CSV files.')
+
+    # convert to numpy array
+    results = np.array(df)
+
+    # get the predicted labels
+    predictions = results[:, :2]
+
+    # get the actual labels
+    actual = results[:, 2:]
+
+    # create a TensorFlow session
+    with tf.Session() as sess:
+
+        # decode the one-hot encoded labels to single integer
+        predictions = sess.run(tf.argmax(predictions, 1))
+        actual = sess.run(tf.argmax(actual, 1))
+
+    # get the confusion matrix based on the actual and predicted labels
+    conf = confusion_matrix(y_true=actual, y_pred=predictions)
+
+    # create a confusion matrix plot
+    plt.imshow(conf, cmap=plt.cm.Purples, interpolation='nearest')
+
+    # set the plot title
+    plt.title('Confusion Matrix for {} Phase'.format(phase))
+
+    # legend of intensity for the plot
+    plt.colorbar()
+
+    tick_marks = np.arange(len(class_names))
+    plt.xticks(tick_marks, class_names, rotation=45)
+    plt.yticks(tick_marks, class_names)
+
+    plt.tight_layout()
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+
+    # show the plot
+    plt.show()
+
+    # get the accuracy of the phase
+    accuracy = (conf[0][0] + conf[1][1]) / results.shape[0]
+
+    # return the confusion matrix and the accuracy
+    return conf, accuracy
