@@ -56,7 +56,7 @@ def main(argv):
     print('False negative : {}'.format(validation_confusion_matrix[0][1][0]))
     print('True positive : {}'.format(validation_confusion_matrix[0][1][1]))
     print('False positive : {}'.format(validation_confusion_matrix[0][0][1]))
-    print('training accuracy : {}'.format(validation_confusion_matrix[1]))
+    print('validation accuracy : {}'.format(validation_confusion_matrix[1]))
 
 
 if __name__ == '__main__':
