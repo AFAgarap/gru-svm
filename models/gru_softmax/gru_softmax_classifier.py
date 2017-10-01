@@ -25,7 +25,7 @@ __version__ = '0.3.9'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from gru_softmax import GruSoftmax
+from models.gru_softmax.gru_softmax import GruSoftmax
 from utils.data import load_data
 import numpy as np
 import tensorflow as tf
