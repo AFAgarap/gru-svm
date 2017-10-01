@@ -64,20 +64,31 @@ def plot_confusion_matrix(phase, path, class_names):
     files = list_files(path=path)
 
     # dataframe to store the results
-    df = pd.DataFrame()
+    # df = pd.DataFrame()
+    #
+    # # store all the results to dataframe
+    # for file in files:
+    #     df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
+    #
+    #     # display a notification whenever 20% of the files are appended
+    #     if (files.index(file) / files.__len__()) % 0.2 == 0:
+    #         print('done appending {}'.format(files.index(file) / files.__len__()))
 
-    # store all the results to dataframe
+    labels = np.array([])
+
     for file in files:
-        df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
+        labels_batch = np.load(file)
+        labels = np.append(labels, labels_batch)
 
-        # display a notification whenever 20% of the files are appended
         if (files.index(file) / files.__len__()) % 0.2 == 0:
-            print('done appending {}'.format(files.index(file) / files.__len__()))
+            print('Done appending {}% of {}'.format((files.index(file) / files.__len__()) * 100, files.__len__()))
+
+    labels = np.reshape(labels, newshape=(labels.shape[0] // 4, 4))
 
     print('Done appending CSV files.')
 
     # convert to numpy array
-    results = np.array(df)
+    results = np.array(labels)
 
     # get the predicted labels
     predictions = results[:, :2]
