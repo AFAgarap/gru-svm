@@ -21,64 +21,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from dataset.normalize_data import list_files
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from sklearn.metrics import confusion_matrix
-import tensorflow as tf
-
-
-def view_results(phase, path, class_names):
-    files = list_files(path=path)
-
-    df = pd.DataFrame()
-
-    for file in files:
-        df = df.append(pd.read_csv(filepath_or_buffer=file, header=None))
-
-    print('Done appending CSV files.')
-
-    results = np.array(df)
-
-    predictions = results[:, :2]
-
-    actual = results[:, 2:]
-
-    with tf.Session() as sess:
-        predictions = sess.run(tf.argmax(predictions, 1))
-        actual = sess.run(tf.argmax(actual, 1))
-
-    conf = confusion_matrix(y_true=actual, y_pred=predictions)
-
-    plt.imshow(conf, cmap=plt.cm.Purples, interpolation='nearest')
-    plt.title('Confusion Matrix for {} Phase'.format(phase))
-
-    plt.colorbar()
-
-    tick_marks = np.arange(len(class_names))
-    plt.xticks(tick_marks, class_names, rotation=45)
-    plt.yticks(tick_marks, class_names)
-
-    plt.tight_layout()
-    plt.ylabel('Actual label')
-    plt.xlabel('Predicted label')
-
-    plt.show()
-
-    # display the findings from the confusion matrix
-    print('True negative : {}'.format(conf[0][0]))
-    print('False negative : {}'.format(conf[1][0]))
-    print('True positive : {}'.format(conf[1][1]))
-    print('False positive : {}'.format(conf[0][1]))
-
-    accuracy = (conf[0][0] + conf[1][1]) / results.shape[0]
-
-    print('{} accuracy : {}'.format(phase, accuracy))
+from utils.data import plot_confusion_matrix
 
 
 def parse_args():
@@ -93,8 +40,23 @@ def parse_args():
 
 
 def main(argv):
-    view_results(phase='Training', path=argv.training_results_path, class_names=['normal', 'under attack'])
-    view_results(phase='Validation', path=argv.validation_results_path, class_names=['normal', 'under attack'])
+    training_confusion_matrix = plot_confusion_matrix(phase='Training', path=argv.training_results_path,
+                                                      class_names=['normal', 'under attack'])
+    validation_confusion_matrix = plot_confusion_matrix(phase='Validation', path=argv.validation_results_path,
+                                                        class_names=['normal', 'under attack'])
+    # display the findings from the confusion matrix
+    print('True negative : {}'.format(training_confusion_matrix[0][0][0]))
+    print('False negative : {}'.format(training_confusion_matrix[0][1][0]))
+    print('True positive : {}'.format(training_confusion_matrix[0][1][1]))
+    print('False positive : {}'.format(training_confusion_matrix[0][0][1]))
+    print('training accuracy : {}'.format(training_confusion_matrix[1]))
+
+    # display the findings from the confusion matrix
+    print('True negative : {}'.format(validation_confusion_matrix[0][0][0]))
+    print('False negative : {}'.format(validation_confusion_matrix[0][1][0]))
+    print('True positive : {}'.format(validation_confusion_matrix[0][1][1]))
+    print('False positive : {}'.format(validation_confusion_matrix[0][0][1]))
+    print('training accuracy : {}'.format(validation_confusion_matrix[1]))
 
 
 if __name__ == '__main__':
