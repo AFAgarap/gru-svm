@@ -42,14 +42,16 @@ SVM_C = 1
 
 class Svm:
 
-    def __init__(self, svm_c, num_epochs, log_path, num_features):
+    def __init__(self, alpha, batch_size, svm_c, num_classes, num_features):
+        self.alpha = alpha
+        self.batch_size = batch_size
         self.svm_c = svm_c
-        self.num_epochs = num_epochs
-        self.log_path = log_path
+        self.num_classes = num_classes
         self.num_features = num_features
 
         def __graph__():
             """Building the inference graph"""
+
             learning_rate = tf.placeholder(dtype=tf.float32, name='learning_rate')
 
             with tf.name_scope('input'):
@@ -59,15 +61,17 @@ class Svm:
                 # [BATCH_SIZE, N_CLASSES]
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
 
-                y_onehot = tf.one_hot(y_input, 2, on_value=1, off_value=-1, name='y_onehot')
+                y_onehot = tf.one_hot(indices=y_input, depth=self.num_classes, on_value=1, off_value=-1,
+                                      name='y_onehot')
 
             with tf.name_scope('training_ops'):
                 with tf.name_scope('weights'):
                     weight = tf.get_variable(name='weights',
-                                             initializer=tf.random_normal([SEQUENCE_LENGTH, N_CLASSES], stddev=0.01))
+                                             initializer=tf.random_normal([self.num_features, self.num_classes],
+                                                                          stddev=0.01))
                     self.variable_summaries(weight)
                 with tf.name_scope('biases'):
-                    bias = tf.get_variable(name='biases', initializer=tf.constant(0.1, shape=[N_CLASSES]))
+                    bias = tf.get_variable(name='biases', initializer=tf.constant(0.1, shape=[self.num_classes]))
                     self.variable_summaries(bias)
                 with tf.name_scope('Wx_plus_b'):
                     y_hat = tf.matmul(x_input, weight) + bias
@@ -77,7 +81,8 @@ class Svm:
             with tf.name_scope('svm'):
                 regularization = 0.5 * tf.reduce_sum(tf.square(weight))
                 hinge_loss = tf.reduce_sum(
-                    tf.square(tf.maximum(tf.zeros([BATCH_SIZE, N_CLASSES]), 1 - tf.cast(y_onehot, tf.float32) * y_hat)))
+                    tf.square(tf.maximum(tf.zeros([self.batch_size, self.num_classes]),
+                                         1 - tf.cast(y_onehot, tf.float32) * y_hat)))
                 with tf.name_scope('loss'):
                     loss = regularization + SVM_C * hinge_loss
             tf.summary.scalar('loss', loss)
@@ -109,11 +114,12 @@ class Svm:
         __graph__()
         sys.stdout.write('</log>\n')
 
-    def train(self, train_data, train_size, validation_data, validation_size):
+    def train(self, checkpoint_path, log_path, model_name, epochs, result_path, train_data, train_size,
+              validation_data, validation_size):
         """Train the model"""
 
-        if not os.path.exists(self.checkpoint_path):
-            os.mkdir(self.checkpoint_path)
+        if not os.path.exists(checkpoint_path):
+            os.mkdir(checkpoint_path)
 
         saver = tf.train.Saver(max_to_keep=1000)
 
@@ -124,16 +130,16 @@ class Svm:
         timestamp = str(time.asctime())
 
         # event file to contain TF graph summaries during training
-        train_writer = tf.summary.FileWriter(self.log_path + timestamp + '-training', graph=tf.get_default_graph())
+        train_writer = tf.summary.FileWriter(log_path + timestamp + '-training', graph=tf.get_default_graph())
 
         # event file to contain TF graph summaries during validation
-        validation_writer = tf.summary.FileWriter(self.log_path + timestamp + '-validation', graph=tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter(log_path + timestamp + '-validation', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
 
             sess.run(init_op)
 
-            checkpoint = tf.train.get_checkpoint_state(self.checkpoint_path)
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
 
             # check if a trained model exists
             if checkpoint and checkpoint.model_checkpoint_path:
