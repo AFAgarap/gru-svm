@@ -40,7 +40,37 @@ def plot_accuracy(data):
 
 
 def load_data(dataset):
-    """Loads the dataset from the specified NumPy array file"""
+    """Returns a tuple containing the features and labels
+    in a dataset.
+
+    Parameter
+    ---------
+    dataset : numpy.ndarray
+      A NumPy array file containing the dataset to be loaded.
+
+    Returns
+    -------
+    features : ndarray
+        A numpy.ndarray with the features in the dataset as its elements.
+    labels : ndarray
+        A numpy.ndarray with the labels in the dataset as its elements.
+
+    Examples
+    --------
+    >>> dataset = 'train_data.npy'
+    >>> features, labels = data.load_data(dataset=dataset)
+    >>> features
+    array([[ 6.,  0.,  2., ...,  6.,  1.,  1.],
+           [ 6.,  0.,  2., ...,  6.,  1.,  1.],
+           [ 9.,  0.,  3., ...,  9.,  1.,  2.],
+           ...,
+           [ 7.,  3.,  7., ...,  1.,  1.,  1.],
+           [ 6.,  0.,  2., ...,  6.,  1.,  1.],
+           [ 8.,  0.,  2., ...,  2.,  1.,  1.]], dtype=float32)
+    >>> labels
+    array([ 1.,  1.,  1., ...,  0.,  1.,  1.], dtype=float32)
+
+    """
 
     # load the data into memory
     data = np.load(dataset)
