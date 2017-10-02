@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -107,6 +107,7 @@ class Svm:
             self.y_onehot = y_onehot
             self.loss = loss
             self.optimizer = optimizer
+            self.predicted_class = predicted_class
             self.learning_rate = learning_rate
             self.accuracy = accuracy
             self.merged = merged
@@ -147,49 +148,69 @@ class Svm:
                 # load the graph from the trained model
                 saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
                 # restore the variables
-                saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_path))
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
 
             try:
-                for step in range(HM_EPOCHS * train_size // BATCH_SIZE):
-                    offset = (step * BATCH_SIZE) % train_size
-                    train_feature_batch = train_data[0][offset:(offset+BATCH_SIZE)]
-                    train_label_batch = train_data[1][offset:(offset+BATCH_SIZE)]
+                for step in range(epochs * train_size // self.batch_size):
+
+                    # set the value for slicing, to fetch batches of data
+                    offset = (step * self.batch_size) % train_size
+                    train_feature_batch = train_data[0][offset:(offset + self.batch_size)]
+                    train_label_batch = train_data[1][offset:(offset + self.batch_size)]
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_feature_batch, self.y_input: train_label_batch,
                                  self.learning_rate: self.alpha}
 
-                    summary, _, epoch_loss = sess.run([self.merged, self.optimizer, self.loss], feed_dict=feed_dict)
+                    train_summary, _, predictions, actual = sess.run([self.merged, self.optimizer, self.predicted_class,
+                                                                      self.y_onehot], feed_dict=feed_dict)
 
                     # display training accuracy and loss every 100 steps and at step 0
                     if step % 100 == 0:
-                        accuracy_ = sess.run(self.accuracy, feed_dict=feed_dict)
-                        print('step [{}] train -- loss : {}, accuracy : {}'.format(step, epoch_loss, accuracy_))
-                        train_writer.add_summary(summary, step)
-                        saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
-                for step in range(HM_EPOCHS * validation_size // BATCH_SIZE):
+
+                        # get the train loss and train accuracy
+                        train_accuracy, train_loss = sess.run([self.accuracy, self.loss], feed_dict=feed_dict)
+
+                        # display the train loss and train accuracy
+                        print('step [{}] train -- loss : {}, accuracy : {}'.format(step, train_loss, train_accuracy))
+
+                        # write the train summary
+                        train_writer.add_summary(train_summary, step)
+
+                        # save the model at the current time step
+                        saver.save(sess, checkpoint_path + model_name, global_step=step)
+
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, phase='training')
+
+                for step in range(epochs * validation_size // self.batch_size):
+
+                    offset = (step * self.batch_size) % validation_size
+                    validation_feature_batch = validation_data[0][offset:(offset + self.batch_size)]
+                    validation_label_batch = validation_data[1][offset:(offset + self.batch_size)]
+
+                    # dictionary for key-value pair input for validation
+                    feed_dict = {self.x_input: validation_feature_batch, self.y_input: validation_label_batch}
+
+                    test_summary, predictions, actual, test_loss, test_accuracy = \
+                        sess.run([self.merged, self.predicted_class, self.y_onehot, self.loss, self.accuracy],
+                                 feed_dict=feed_dict)
 
                     # display validation accuracy and loss every 100 steps
                     if step % 100 == 0 and step > 0:
-                        offset = (step * BATCH_SIZE) % validation_size
-                        validation_feature_batch = validation_data[0][offset:(offset + BATCH_SIZE)]
-                        validation_label_batch = validation_data[1][offset:(offset + BATCH_SIZE)]
 
-                        # dictionary for key-value pair input for validation
-                        feed_dict = {self.x_input: validation_feature_batch, self.y_input: validation_label_batch}
-
-                        summary, test_loss, test_accuracy = sess.run([self.merged, self.loss, self.accuracy],
-                                                                     feed_dict=feed_dict)
+                        # write the validation summary
+                        validation_writer.add_summary(test_summary, step)
 
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
-                        validation_writer.add_summary(summary, step)
 
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path,
+                                     phase='validation')
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
             finally:
                 print('EOF -- training done at step {}'.format(step))
 
-            saver.save(sess, self.checkpoint_path + self.model_name, global_step=step)
+            saver.save(sess, checkpoint_path + model_name, global_step=step)
 
     @staticmethod
     def variable_summaries(var):
@@ -239,10 +260,13 @@ def main(arguments):
     train_size = train_features.shape[0]
     validation_size = validation_features.shape[0]
 
-    model = Svm(svm_c=SVM_C, num_epochs=HM_EPOCHS, log_path=arguments.log_path, num_features=SEQUENCE_LENGTH)
+    model = Svm(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, svm_c=SVM_C, num_classes=N_CLASSES,
+                num_features=SEQUENCE_LENGTH)
 
-    model.train(train_data=[train_features, train_labels], train_size=train_size,
-                validation_data=[validation_features, validation_labels], validation_size=validation_size)
+    model.train(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name,
+                epochs=HM_EPOCHS, result_path=arguments.result_path, train_data=[train_features, train_labels],
+                train_size=train_size, validation_data=[validation_features, validation_labels],
+                validation_size=validation_size)
 
 
 if __name__ == '__main__':
