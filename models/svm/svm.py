@@ -26,6 +26,7 @@ __author__ = 'Abien Fred Agarap'
 
 import argparse
 import data
+import numpy as np
 import os
 import sys
 import tensorflow as tf
@@ -201,6 +202,16 @@ class Svm:
             tf.summary.scalar('max', tf.reduce_max(var))
             tf.summary.scalar('min', tf.reduce_min(var))
             tf.summary.histogram('histogram', var)
+
+    @staticmethod
+    def save_labels(predictions, actual, result_path, step, phase):
+        """Saves the actual and predicted labels to a NPY file"""
+
+        # Concatenate the predicted and actual labels
+        labels = np.concatenate((predictions, actual), axis=1)
+
+        # save every labels array to NPY file
+        np.save(file=os.path.join(result_path, '{}-svm-{}.npy'.format(phase, step)), arr=labels)
 
 
 def parse_args():
