@@ -42,10 +42,11 @@ SVM_C = 1
 
 class Svm:
 
-    def __init__(self, checkpoint_path, log_path, model_name):
-        self.checkpoint_path = checkpoint_path
+    def __init__(self, svm_c, num_epochs, log_path, num_features):
+        self.svm_c = svm_c
+        self.num_epochs = num_epochs
         self.log_path = log_path
-        self.model_name = model_name
+        self.num_features = num_features
 
         def __graph__():
             """Building the inference graph"""
@@ -53,7 +54,7 @@ class Svm:
 
             with tf.name_scope('input'):
                 # [BATCH_SIZE, SEQUENCE_LENGTH]
-                x_input = tf.placeholder(dtype=tf.float32, shape=[None, SEQUENCE_LENGTH], name='x_input')
+                x_input = tf.placeholder(dtype=tf.float32, shape=[None, self.num_features], name='x_input')
 
                 # [BATCH_SIZE, N_CLASSES]
                 y_input = tf.placeholder(dtype=tf.uint8, shape=[None], name='y_input')
@@ -221,7 +222,7 @@ def main(arguments):
     train_size = train_features.shape[0]
     validation_size = validation_features.shape[0]
 
-    model = Svm(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name)
+    model = Svm(svm_c=SVM_C, num_epochs=HM_EPOCHS, log_path=arguments.log_path, num_features=SEQUENCE_LENGTH)
 
     model.train(train_data=[train_features, train_labels], train_size=train_size,
                 validation_data=[validation_features, validation_labels], validation_size=validation_size)
