@@ -156,7 +156,7 @@ class Svm:
 
                     # dictionary for key-value pair input for training
                     feed_dict = {self.x_input: train_feature_batch, self.y_input: train_label_batch,
-                                 self.learning_rate: LEARNING_RATE}
+                                 self.learning_rate: self.alpha}
 
                     summary, _, epoch_loss = sess.run([self.merged, self.optimizer, self.loss], feed_dict=feed_dict)
 
