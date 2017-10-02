@@ -16,29 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ==============================================================================
 
-"""Implementation of SVM for Intrusion Detection"""
+"""An implementation of L2-SVM model"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __author__ = 'Abien Fred Agarap'
 
-import argparse
-import data
 import numpy as np
 import os
 import sys
 import tensorflow as tf
 import time
-
-# Hyper-parameters
-BATCH_SIZE = 256
-HM_EPOCHS = 1
-LEARNING_RATE = 1e-5
-N_CLASSES = 2
-SEQUENCE_LENGTH = 21
-SVM_C = 1
 
 
 class Svm:
@@ -85,7 +75,7 @@ class Svm:
                     tf.square(tf.maximum(tf.zeros([self.batch_size, self.num_classes]),
                                          1 - tf.cast(y_onehot, tf.float32) * y_hat)))
                 with tf.name_scope('loss'):
-                    loss = regularization + SVM_C * hinge_loss
+                    loss = regularization + self.svm_c * hinge_loss
             tf.summary.scalar('loss', loss)
 
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -233,43 +223,3 @@ class Svm:
 
         # save every labels array to NPY file
         np.save(file=os.path.join(result_path, '{}-svm-{}.npy'.format(phase, step)), arr=labels)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='SVM for Intrusion Detection')
-    group = parser.add_argument_group('Arguments')
-    group.add_argument('-t', '--train_dataset', required=True, type=str,
-                       help='the NumPy array training dataset (*.npy) to be used')
-    group.add_argument('-v', '--validation_dataset', required=True, type=str,
-                       help='the NumPy array validation dataset (*.npy) to be used')
-    group.add_argument('-c', '--checkpoint_path', required=True, type=str,
-                       help='path where to save the trained model')
-    group.add_argument('-l', '--log_path', required=True, type=str,
-                       help='path where to save the TensorBoard logs')
-    group.add_argument('-m', '--model_name', required=True, type=str,
-                       help='filename for the trained model')
-    arguments = parser.parse_args()
-    return arguments
-
-
-def main(arguments):
-
-    train_features, train_labels = data.load_data(dataset=arguments.train_dataset)
-    validation_features, validation_labels = data.load_data(dataset=arguments.validation_dataset)
-
-    train_size = train_features.shape[0]
-    validation_size = validation_features.shape[0]
-
-    model = Svm(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, svm_c=SVM_C, num_classes=N_CLASSES,
-                num_features=SEQUENCE_LENGTH)
-
-    model.train(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name,
-                epochs=HM_EPOCHS, result_path=arguments.result_path, train_data=[train_features, train_labels],
-                train_size=train_size, validation_data=[validation_features, validation_labels],
-                validation_size=validation_size)
-
-
-if __name__ == '__main__':
-    args = parse_args()
-
-    main(args)
