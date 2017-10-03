@@ -187,6 +187,7 @@ def list_files(path):
 
 
 def parse_args():
+    """Returns user-defined argument values."""
     parser = argparse.ArgumentParser(
         description='Data normalization script for Kyoto University 2013 Network Traffic Data')
     group = parser.add_argument_group('Arguments')
