@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.1'
+__version__ = '0.1.1'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
@@ -29,11 +29,9 @@ from models.svm.svm import Svm
 
 # Hyper-parameters
 BATCH_SIZE = 256
-HM_EPOCHS = 1
 LEARNING_RATE = 1e-5
 N_CLASSES = 2
 SEQUENCE_LENGTH = 21
-SVM_C = 1
 
 
 def parse_args():
@@ -49,6 +47,10 @@ def parse_args():
                        help='path where to save the TensorBoard logs')
     group.add_argument('-m', '--model_name', required=True, type=str,
                        help='filename for the trained model')
+    group.add_argument('-p', '--svm_c', required=True, type=str,
+                       help='Penalty parameter C of the SVM')
+    group.add_argument('-e', '--num_epochs', required=True, type=str,
+                       help='Number of epochs for training')
     arguments = parser.parse_args()
     return arguments
 
@@ -61,11 +63,11 @@ def main(arguments):
     train_size = train_features.shape[0]
     validation_size = validation_features.shape[0]
 
-    model = Svm(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, svm_c=SVM_C, num_classes=N_CLASSES,
+    model = Svm(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, svm_c=arguments.svm_c, num_classes=N_CLASSES,
                 num_features=SEQUENCE_LENGTH)
 
     model.train(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name,
-                epochs=HM_EPOCHS, result_path=arguments.result_path, train_data=[train_features, train_labels],
+                epochs=arguments.num_epochs, result_path=arguments.result_path, train_data=[train_features, train_labels],
                 train_size=train_size, validation_data=[validation_features, validation_labels],
                 validation_size=validation_size)
 
