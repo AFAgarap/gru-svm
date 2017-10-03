@@ -114,13 +114,23 @@ def normalize_data(path, write_path, num_chunks):
     # standardize continuous and quasi-continuous features
     df[COLUMN_TO_STANDARDIZE] = preprocessing.StandardScaler().fit_transform(df[COLUMN_TO_STANDARDIZE])
 
-    # split the dataframe to multiple CSV files
+    return df
+
+
+def save_dataframe(dataframe, write_path, num_chunks):
+    """Saves the given pandas dataframe to N-number of CSV files.
+
+    Parameter
+    ---------
+    dataframe : pandas.core.frame.DataFrame
+      A Pandas dataframe containing the normalized dataset.
+    num_chunks : int
+      The number of file splits for the normalized dataset.
+    """
     for id, df_i in enumerate(np.array_split(df, num_chunks)):
         df_i.to_csv(path_or_buf=os.path.join(write_path, '{id}.csv'.format(id=id)), columns=COLUMN_NAMES, header=None,
                     index=False)
         print('Saving CSV file : {path}'.format(path=os.path.join(write_path, '{id}'.format(id=id))))
-
-    print('Done')
 
 
 def list_files(path):
@@ -142,7 +152,7 @@ def list_files(path):
     >>> list_files(PATH)
     >>> ['/home/data/file1', '/home/data/file2', '/home/data/file3']
     """
-    
+
     file_list = []
     for (dir_path, dir_names, file_names) in walk(path):
         file_list.extend(os.path.join(dir_path, filename) for filename in file_names)
