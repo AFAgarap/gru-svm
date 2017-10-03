@@ -52,25 +52,25 @@ COLUMN_TO_INDEX = ['ashula_detection', 'dst_ip_add', 'flag', 'ids_detection', 'l
 
 
 def normalize_data(path, write_path, num_chunks):
-	"""Normalizes a given dataset.
+    """Normalizes a given dataset.
 
-	Parameter
-	---------
-	path : str
-	  The path of the dataset to be normalized.
-	write_path : str
-	  The path where to save the normalized dataset.
-	num_chunks : int
-	  The number of file splits for the normalized dataset.
+    Parameter
+    ---------
+    path : str
+      The path of the dataset to be normalized.
+    write_path : str
+      The path where to save the normalized dataset.
+    num_chunks : int
+      The number of file splits for the normalized dataset.
 
-	Example
-	-------
-	>>> PATH = '/home/data'
-	>>> WRITE_PATH = '/home/normalized_data'
-	>>> NUM_CHUNKS = 20
-	>>> normalize_data(PATH, WRITE_PATH, NUM_CHUNKS)
-	"""
-	
+    Example
+    -------
+    >>> PATH = '/home/data'
+    >>> WRITE_PATH = '/home/normalized_data'
+    >>> NUM_CHUNKS = 20
+    >>> normalize_data(PATH, WRITE_PATH, NUM_CHUNKS)
+    """
+
     # get all the CSV files in the PATH dir
     files = list_files(path=path)
 
@@ -124,7 +124,25 @@ def normalize_data(path, write_path, num_chunks):
 
 
 def list_files(path):
-    """Returns the list of files present in the path"""
+    """Returns a list of files
+
+    Parameter
+    ---------
+    path : str
+      A string consisting of a path containing files.
+
+    Returns
+    -------
+    file_list : list
+      A list of the files present in the given directory
+
+    Examples
+    --------
+    >>> PATH = '/home/data'
+    >>> list_files(PATH)
+    >>> ['/home/data/file1', '/home/data/file2', '/home/data/file3']
+    """
+    
     file_list = []
     for (dir_path, dir_names, file_names) in walk(path):
         file_list.extend(os.path.join(dir_path, filename) for filename in file_names)
