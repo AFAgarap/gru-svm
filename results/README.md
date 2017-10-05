@@ -1,4 +1,20 @@
-#### GRU+Softmax 
+## Results
+
+All experiments in this study were conducted on a laptop computer with Intel Core(TM) i5-6300HQ CPU @ 2.30GHz x 4, 16GB
+of DDR3 RAM, and NVIDIA GeForce GTX 960M 4GB DDR5 GPU. The hyper-parameters used for both the proposed and the
+conventional models were assigned by hand, and through hyper-parameter optimization/tuning.
+
+#### Hyper-parameters used in both neural networks
+|Hyperparameters|GRU+SVM|GRU+Softmax|
+|--------------|------|-----------|
+|BATCH_SIZE|256|256|
+|CELL_SIZE|256|256|
+|DROPOUT_RATE|0.85|0.8|
+|EPOCHS|2|2|
+|LEARNING RATE|1e-5|1e-6
+|SVM_C|0.5|n/a|
+
+#### GRU+Softmax binary classification statistical measures
 
 |Variable | Training results | Validation results|
 |---------|------------------|-------------------|
@@ -9,7 +25,7 @@
 Accuracy|63.073973786244097%|70.78705112598904%|
 
 
-#### GRU+SVM
+#### GRU+SVM binary classification statistical measures
 
 |Variable | Training results | Validation results|
 |---------|------------------|-------------------|
