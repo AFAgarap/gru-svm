@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 __author__ = 'Abien Fred Agarap'
 
 from dataset.normalize_data import list_files
@@ -87,7 +87,24 @@ def load_data(dataset):
 
 
 def plot_confusion_matrix(phase, path, class_names):
-    """Plots the confusion matrix"""
+    """Plots the confusion matrix using matplotlib.
+
+    Parameter
+    ---------
+    phase : str
+      String value indicating for what phase is the confusion matrix, i.e. training/validation/testing
+    path : str
+      Directory where the predicted and actual label NPY files reside
+    class_names : str
+      List consisting of the class names for the labels
+
+    Returns
+    -------
+    conf : array, shape = [num_classes, num_classes]
+      Confusion matrix
+    accuracy : float
+      Predictive accuracy
+    """
 
     # list all the results files
     files = list_files(path=path)
