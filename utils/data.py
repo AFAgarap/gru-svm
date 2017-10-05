@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.5.3'
+__version__ = '0.5.4'
 __author__ = 'Abien Fred Agarap'
 
 from dataset.normalize_data import list_files
@@ -28,15 +28,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
-
-
-def plot_accuracy(data):
-    """Scatter plot the data"""
-    figure = plt.figure()
-    f_axes = figure.add_subplot(111)
-    f_axes.scatter(data[:, 0], data[:, 1])
-    plt.grid()
-    plt.show()
 
 
 def load_data(dataset):
