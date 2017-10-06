@@ -123,7 +123,29 @@ class GruSoftmax:
 
     def train(self, checkpoint_path, log_path, model_name, epochs, train_data, train_size, validation_data,
               validation_size, result_path):
-        """Train the model"""
+        """Trains the model
+
+        Parameter
+        ---------
+        checkpoint_path : str
+          The path where to save the trained model.
+        log_path : str
+          The path where to save the TensorBoard summaries.
+        model_name : str
+          The filename for the trained model.
+        epochs : int
+          The number of passes through the whole dataset.
+        train_data : numpy.ndarray
+          The NumPy array training dataset.
+        train_size : int
+          The size of `train_data`.
+        validation_data : numpy.ndarray
+          The NumPy array testing dataset.
+        validation_size : int
+          The size of `validation_data`.
+        result_path : str
+          The path where to save the actual and predicted classes.
+        """
         
         if not os.path.exists(checkpoint_path):
             os.mkdir(checkpoint_path)
