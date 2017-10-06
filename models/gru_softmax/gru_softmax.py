@@ -32,8 +32,27 @@ import time
 
 
 class GruSoftmax:
+    """Implementation of the GRU+Softmax model using TensorFlow"""
 
     def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length):
+        """Initialize the GRU+Softmax class
+
+        Parameter
+        ---------
+        alpha : float
+          The learning rate for the GRU+Softmax model.
+        batch_size : int
+          The number of batches to use for training/validation/testing.
+        cell_size : int
+          The size of cell state.
+        dropout_rate : float
+          The dropout rate to be used.
+        num_classes : int
+          The number of classes in a dataset.
+        sequence_length : int
+          The number of features in a dataset.
+        """
+
         self.alpha = alpha
         self.batch_size = batch_size
         self.cell_size = cell_size
