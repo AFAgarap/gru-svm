@@ -263,7 +263,21 @@ class GruSoftmax:
 
     @staticmethod
     def save_labels(predictions, actual, result_path, step, phase):
-        """Saves the actual and predicted labels to a NPY file"""
+        """Saves the actual and predicted labels to a NPY file
+
+        Parameter
+        ---------
+        predictions : numpy.ndarray
+          The NumPy array containing the predicted labels.
+        actual : numpy.ndarray
+          The NumPy array containing the actual labels.
+        result_path : str
+          The path where to save the concatenated actual and predicted labels.
+        step : int
+          The time step for the NumPy arrays.
+        phase : str
+          The phase for which the predictions is, i.e. training/validation/testing.
+        """
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
