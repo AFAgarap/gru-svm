@@ -32,8 +32,28 @@ import time
 
 
 class GruSvm:
+    """Implementation of the GRU+SVM model using TensorFlow"""
 
     def __init__(self, alpha, batch_size, cell_size, dropout_rate, num_classes, sequence_length, svm_c):
+        """Initialize the GRU+SVM class
+
+        Parameter
+        ---------
+        alpha : float
+          The learning rate for the GRU+Softmax model.
+        batch_size : int
+          The number of batches to use for training/validation/testing.
+        cell_size : int
+          The size of cell state.
+        dropout_rate : float
+          The dropout rate to be used.
+        num_classes : int
+          The number of classes in a dataset.
+        sequence_length : int
+          The number of features in a dataset.
+        svm_c : float
+          The SVM penalty parameter C.
+        """
         self.alpha = alpha
         self.batch_size = batch_size
         self.cell_size = cell_size
@@ -130,7 +150,29 @@ class GruSvm:
 
     def train(self, checkpoint_path, log_path, model_name, epochs, train_data, train_size, validation_data,
               validation_size, result_path):
-        """Train the model"""
+        """Trains the model
+
+        Parameter
+        ---------
+        checkpoint_path : str
+          The path where to save the trained model.
+        log_path : str
+          The path where to save the TensorBoard summaries.
+        model_name : str
+          The filename for the trained model.
+        epochs : int
+          The number of passes through the whole dataset.
+        train_data : numpy.ndarray
+          The NumPy array training dataset.
+        train_size : int
+          The size of `train_data`.
+        validation_data : numpy.ndarray
+          The NumPy array testing dataset.
+        validation_size : int
+          The size of `validation_data`.
+        result_path : str
+          The path where to save the actual and predicted classes array.
+        """
 
         if not os.path.exists(path=checkpoint_path):
             os.mkdir(path=checkpoint_path)
@@ -247,7 +289,21 @@ class GruSvm:
 
     @staticmethod
     def save_labels(predictions, actual, result_path, step, phase):
-        """Saves the actual and predicted labels to a NPY file"""
+        """Saves the actual and predicted labels to a NPY file
+
+        Parameter
+        ---------
+        predictions : numpy.ndarray
+          The NumPy array containing the predicted labels.
+        actual : numpy.ndarray
+          The NumPy array containing the actual labels.
+        result_path : str
+          The path where to save the concatenated actual and predicted labels.
+        step : int
+          The time step for the NumPy arrays.
+        phase : str
+          The phase for which the predictions is, i.e. training/validation/testing.
+        """
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
