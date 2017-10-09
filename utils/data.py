@@ -111,7 +111,7 @@ def plot_confusion_matrix(phase, path, class_names):
 
     labels = np.reshape(labels, newshape=(labels.shape[0] // 4, 4))
 
-    print('Done appending CSV files.')
+    print('Done appending NPY files.')
 
     # get the predicted labels
     predictions = labels[:, :2]
