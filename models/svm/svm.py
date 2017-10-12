@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -32,8 +32,24 @@ import time
 
 
 class Svm:
+    """Implementation of L2-Support Vector Machine using TensorFlow"""
 
     def __init__(self, alpha, batch_size, svm_c, num_classes, num_features):
+        """Initialize the SVM class
+
+        Parameter
+        ---------
+        alpha : float
+          The learning rate for the SVM model.
+        batch_size : int
+          Number of batches to use for training and testing.
+        svm_c : float
+          The SVM penalty parameter.
+        num_classes : int
+          Number of classes in a dataset.
+        num_features : int
+          Number of features in a dataset.
+        """
         self.alpha = alpha
         self.batch_size = batch_size
         self.svm_c = svm_c
@@ -108,7 +124,29 @@ class Svm:
 
     def train(self, checkpoint_path, log_path, model_name, epochs, result_path, train_data, train_size,
               validation_data, validation_size):
-        """Train the model"""
+        """Trains the SVM model
+
+        Parameter
+        ---------
+        checkpoint_path : str
+          The directory where to save the trained model.
+        log_path : str
+          The directory where to save the TensorBoard logs.
+        model_name : str
+          The filename of the trained model.
+        epochs : int
+          The number of passes through the entire dataset.
+        result_path : str
+          The path where to save the NPY files consisting of the actual and predicted labels.
+        train_data : numpy.ndarray
+          The numpy.ndarray to be used as the training dataset.
+        train_size : int
+          The number of data in `train_data`.
+        validation_data : numpy.ndarray
+          The numpy.ndarray to be used as the validation dataset.
+        validation_size : int
+          The number of data in `validation_data`.
+        """
 
         if not os.path.exists(checkpoint_path):
             os.mkdir(checkpoint_path)
@@ -219,7 +257,21 @@ class Svm:
 
     @staticmethod
     def save_labels(predictions, actual, result_path, step, phase):
-        """Saves the actual and predicted labels to a NPY file"""
+        """Saves the actual and predicted labels to a NPY file
+
+        Parameter
+        ---------
+        predictions : numpy.ndarray
+          The NumPy array containing the predicted labels.
+        actual : numpy.ndarray
+          The NumPy array containing the actual labels.
+        result_path : str
+          The path where to save the concatenated actual and predicted labels.
+        step : int
+          The time step for the NumPy arrays.
+        phase : str
+          The phase for which the predictions is, i.e. training/validation/testing.
+        """
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
