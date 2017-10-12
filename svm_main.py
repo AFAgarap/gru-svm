@@ -67,9 +67,9 @@ def main(arguments):
                 num_features=SEQUENCE_LENGTH)
 
     model.train(checkpoint_path=arguments.checkpoint_path, log_path=arguments.log_path, model_name=arguments.model_name,
-                epochs=arguments.num_epochs, result_path=arguments.result_path, train_data=[train_features, train_labels],
-                train_size=train_size, validation_data=[validation_features, validation_labels],
-                validation_size=validation_size)
+                epochs=arguments.num_epochs, result_path=arguments.result_path,
+                train_data=[train_features, train_labels], train_size=train_size,
+                validation_data=[validation_features, validation_labels], validation_size=validation_size)
 
 
 if __name__ == '__main__':

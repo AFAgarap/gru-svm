@@ -30,25 +30,24 @@ import os
 from os import walk
 from sklearn import preprocessing
 
-
 # column names of 24 features
 COLUMN_NAMES = ['duration', 'service', 'src_bytes', 'dest_bytes', 'count', 'same_srv_rate',
-             'serror_rate', 'srv_serror_rate', 'dst_host_count', 'dst_host_srv_count',
-             'dst_host_same_src_port_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate',
-             'flag', 'ids_detection', 'malware_detection', 'ashula_detection', 'label', 'src_ip_add',
-             'src_port_num', 'dst_ip_add', 'dst_port_num', 'start_time', 'protocol']
+                'serror_rate', 'srv_serror_rate', 'dst_host_count', 'dst_host_srv_count',
+                'dst_host_same_src_port_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate',
+                'flag', 'ids_detection', 'malware_detection', 'ashula_detection', 'label', 'src_ip_add',
+                'src_port_num', 'dst_ip_add', 'dst_port_num', 'start_time', 'protocol']
 
 # column names of continuous and quasi-continuous features
 COLUMN_TO_STANDARDIZE = ['duration', 'src_bytes', 'dest_bytes', 'count',
-               'same_srv_rate', 'serror_rate', 'srv_serror_rate',
-               'dst_host_count', 'dst_host_srv_count',
-               'dst_host_same_src_port_rate', 'dst_host_serror_rate',
-               'dst_host_srv_serror_rate', 'src_port_num',
-               'dst_port_num', 'start_time']
+                         'same_srv_rate', 'serror_rate', 'srv_serror_rate',
+                         'dst_host_count', 'dst_host_srv_count',
+                         'dst_host_same_src_port_rate', 'dst_host_serror_rate',
+                         'dst_host_srv_serror_rate', 'src_port_num',
+                         'dst_port_num', 'start_time']
 
 # column names of categorical data
 COLUMN_TO_INDEX = ['ashula_detection', 'dst_ip_add', 'flag', 'ids_detection', 'label',
-                 'malware_detection', 'protocol', 'service', 'src_ip_add']
+                   'malware_detection', 'protocol', 'service', 'src_ip_add']
 
 
 def normalize_data(path):
@@ -131,9 +130,9 @@ def normalize_data(path):
     df['label'] = df['label'].apply(lambda label: 1 if label == -1 or label == -2 else 0)
 
     # convert time to continuous data
-    df['start_time'] = df['start_time'].apply(lambda time: int(time.split(':')[0]) +
-                                                           (int(time.split(':')[1]) * (1 / 60)) +
-                                                           (int(time.split(':')[2]) * (1 / 3600)))
+    df['start_time'] = \
+        df['start_time'].apply(lambda time: int(time.split(':')[0]) + (int(time.split(':')[1]) * (1 / 60)) +
+                                            (int(time.split(':')[2]) * (1 / 3600)))
 
     # index categorical data to [0, n-1] where n is the number of categories per feature
     df[COLUMN_TO_INDEX] = df[COLUMN_TO_INDEX].apply(preprocessing.LabelEncoder().fit_transform)
