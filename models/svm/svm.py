@@ -208,7 +208,8 @@ class Svm:
                         # save the model at the current time step
                         saver.save(sess, checkpoint_path + model_name, global_step=step)
 
-                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, phase='training')
+                    self.save_labels(predictions=predictions, actual=actual, result_path=result_path, phase='training',
+                                     step=step)
             except KeyboardInterrupt:
                 print('Training interrupted at {}'.format(step))
                 os._exit(1)
@@ -237,7 +238,7 @@ class Svm:
                         print('step [{}] validation -- loss : {}, accuracy : {}'.format(step, test_loss, test_accuracy))
 
                     self.save_labels(predictions=predictions, actual=actual, result_path=result_path,
-                                     phase='validation')
+                                     phase='validation', step=step)
 
                 print('EOF -- Testing done at step {}'.format(step))
 

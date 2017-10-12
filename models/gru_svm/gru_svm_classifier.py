@@ -92,7 +92,8 @@ def predict(test_data, checkpoint_path, result_path):
                 accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
                 accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
 
-                GruSvm.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, phase='testing')
+                GruSvm.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, phase='testing',
+                                   step=step)
 
                 if step % 100 == 0 and step > 0:
                     print('step [{}] test -- accuracy : {}'.format(step, accuracy))
