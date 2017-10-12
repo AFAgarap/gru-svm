@@ -25,7 +25,7 @@ __version__ = '0.1.3'
 __author__ = 'Abien Fred Agarap'
 
 import argparse
-from data import load_data
+from utils.data import load_data
 import numpy as np
 import os
 import tensorflow as tf

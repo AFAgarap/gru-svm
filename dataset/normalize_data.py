@@ -154,7 +154,7 @@ def save_dataframe(dataframe, write_path, num_chunks):
     num_chunks : int
       The number of file splits for the normalized dataset.
     """
-    for id, df_i in enumerate(np.array_split(df, num_chunks)):
+    for id, df_i in enumerate(np.array_split(dataframe, num_chunks)):
         df_i.to_csv(path_or_buf=os.path.join(write_path, '{id}.csv'.format(id=id)), columns=COLUMN_NAMES, header=None,
                     index=False)
         print('Saving CSV file : {path}'.format(path=os.path.join(write_path, '{id}'.format(id=id))))
