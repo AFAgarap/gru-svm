@@ -24,7 +24,7 @@ import normalize_data
 PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/4/attack'
 
 # get the column names from normalize_data.py module
-COL_NAMES = normalize_data.col_names
+COL_NAMES = normalize_data.COLUMN_NAMES
 
 # list to contain the filenames
 files = []

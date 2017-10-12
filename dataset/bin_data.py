@@ -25,11 +25,11 @@ import normalize_data as nd
 __version__ = '0.1'
 __author__ = 'Abien Fred Agarap'
 
-column_names = nd.col_names
+column_names = nd.COLUMN_NAMES
 columns_to_save = list(column_names)
 columns_to_save.remove('dst_ip_add')
 columns_to_save.remove('src_ip_add')
-cols_to_std = nd.cols_to_std
+cols_to_std = nd.COLUMN_TO_STANDARDIZE
 cols_to_std.append('service')
 cols_to_std.append('flag')
 
