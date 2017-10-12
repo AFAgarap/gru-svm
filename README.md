@@ -8,7 +8,21 @@ A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support V
 The full paper on this project may be read at the following sites: [ResearchGate](https://goo.gl/muZP5A), [arXiv.org](https://arxiv.org/abs/1709.03082), [Academia.edu](https://goo.gl/8aBXpX).
 
 ## Abstract
-Recurrent neural networks (RNNs) is a kind of machine learning algorithm used for processing data that are sequential in nature. Hence, it is the most-commonly used neural network architecture for natural language processing, speech recognition, and sequence (such as words, sentences, even logs) classification among others. Conventionally, like other neural networks, RNNs implement the softmax activation function, which outputs a probability distribution over its target classes, as its last layer in a classification task. In this paper, I present a modification on the Gated Recurrent Unit (GRU) variant of RNN, where a Support Vector Machine (SVM) will be used instead of softmax as the last layer in a classification task. This proposed architecture was specifically intended for binary (non-probabilistic) classification. The choice of SVM over softmax is of paramount importance due to its computational efficiency. An SVM has a constant time complexity (O(1)) for its predictor function, while a softmax has a linear time complexity (O(n)), since it must satisfy a probability distribution for its prediction. For this study, the proposed architecture and the conventional architecture were trained to detect intrusions in a network traffic data, using the 2013 iteration of the Kyoto University honeypot systems dataset. The said task is a binary classification problem, i.e. to detect whether there is an attack or none. It was found out that not only was the GRU-SVM model had higher training and validation accuracy than its comparator, but also, it was faster in terms of training time.
+Gated Recurrent Unit (GRU) is a recently-developed variation of the long short-term memory (LSTM) unit, both of which
+are types of recurrent neural network (RNN). Through empirical evidence, both models have been proven to be effective
+in a wide variety of machine learning tasks such as natural language processing (Wen et al., 2015), speech
+recognition (Chorowski et al., 2015), and text classification (Yang et al., 2016). Conventionally, like most
+neural networks, both of the aforementioned RNN variants employ the Softmax function as its final output layer for its
+prediction, and the cross-entropy function for computing its loss. In this paper, we present an amendment to this norm
+by introducing linear support vector machine (SVM) as the replacement for Softmax in the final output layer of a GRU 
+model. Furthermore, the cross-entropy function shall be replaced with a margin-based function. While there have been
+similar studies (Alalshekmubarak & Smith, 2013; Tang, 2013), this proposal is primarily intended for binary
+classification on intrusion detection using the 2013 network traffic data from the honeypot systems of Kyoto University.
+Results show that the GRU-SVM model performs relatively higher than the conventional GRU-Softmax model. The proposed
+model reached a training accuracy of ~81.54% and a testing accuracy of ~84.15%, while the latter was able to reach a
+training accuracy of ~63.07% and a testing accuracy of ~70.75%. In addition, the juxtaposition of these two final output
+layers indicate that the SVM would outperform Softmax in prediction time - a theoretical implication which was supported
+by the actual training and testing time in the study.
 
 ## Citation
 ```
