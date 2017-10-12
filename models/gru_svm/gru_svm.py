@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -240,6 +240,11 @@ class GruSvm:
 
                     self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
                                      phase='training')
+            except KeyboardInterrupt:
+                print('Training interrupted at {}'.format(step))
+                os._exit(1)
+            finally:
+                print('EOF -- Training done at step {}'.format(step))
 
                 for step in range(epochs * validation_size // self.batch_size):
 
@@ -268,10 +273,7 @@ class GruSvm:
                     self.save_labels(predictions=predictions, actual=actual, result_path=result_path, step=step,
                                      phase='validation')
 
-            except KeyboardInterrupt:
-                print('Training interrupted at {}'.format(step))
-            finally:
-                print('EOF -- training done at step {}'.format(step))
+                print('EOF -- Testing done at step {}'.format(step))
 
             saver.save(sess, checkpoint_path + model_name, global_step=step)
 
