@@ -75,11 +75,15 @@ def parse_args():
                        help='path of the dataset in TXT format')
     group.add_argument('-c', '--csv_path', required=True, type=str,
                        help='path where the dataset in CSV format will be stored')
-    args = vars(parser.parse_args())
-    return args
+    arguments = parser.parse_args()
+    return arguments
+
+
+def main(arguments):
+    convert_txt_to_csv(arguments.txt_path, arguments.csv_path)
 
 
 if __name__ == '__main__':
     args = parse_args()
 
-    convert_txt_to_csv(args['txt_path'], args['csv_path'])
+    main(arguments=args)
