@@ -34,6 +34,16 @@ from os import walk
 
 
 def convert_txt_to_csv(txt_path, csv_path):
+    """Converts the Kyoto University dataset TXT files to CSV files
+
+    Parameter
+    ---------
+    txt_path : str
+      The path where the TXT files are located.
+    csv_path : str
+      The path where to save the CSV-converted files.
+    """
+    
     # list to store the filenames under the subdirectories of the <path>
     data = list_files(path=txt_path)
 
