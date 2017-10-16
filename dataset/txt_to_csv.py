@@ -43,7 +43,7 @@ def convert_txt_to_csv(txt_path, csv_path):
     csv_path : str
       The path where to save the CSV-converted files.
     """
-    
+
     # list to store the filenames under the subdirectories of the <path>
     data = list_files(path=txt_path)
 
