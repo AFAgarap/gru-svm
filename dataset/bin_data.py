@@ -35,7 +35,19 @@ cols_to_std.append('flag')
 
 
 def bin_data(path, write_path, num_chunks, binning):
-    """Method for binning the dataset"""
+    """Bins the continuous features through bucket or quantile binning
+
+    Parameter
+    ---------
+    path : str
+      The path where the dataset to be binned is located.
+    write_path : str
+      The path where to save the binned dataset.
+    num_chunks : int
+      The number of file splits to perform on the binned dataset.
+    binning : int
+      The type of binning to perform on the dataset: 0 if bucket binning, 1 if quantile binning.
+    """
 
     # get the list of files found in PATH
     files = nd.list_files(path=path)
@@ -81,13 +93,15 @@ def parse_args():
                        help='number of chunks of CSV files to save')
     group.add_argument('-b', '--binning', action='store',
                        help='set to 0 for bucket binning; set 1 for decile binning')
-    args = vars(parser.parse_args())
-    return args
+    arguments = parser.parse_args()
+    return arguments
+
+
+def main(arguments):
+    bin_data(arguments.dataset, arguments.write_path, arguments.num_chunks, arguments.binning)
 
 
 if __name__ == '__main__':
-    # parse arguments
     args = parse_args()
 
-    # main method
-    bin_data(args['dataset'], args['write_path'], args['num_chunks'], args['binning'])
+    main(args)
