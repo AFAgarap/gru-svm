@@ -60,7 +60,7 @@ def parse_args():
 
 
 def main(arguments):
-    pass
+    csv_to_npy(arguments.csv_path, arguments.npy_path, arguments.npy_filename)
 
 
 if __name__ == '__main__':
