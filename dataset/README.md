@@ -103,27 +103,27 @@ Arguments:
 
 First, convert the raw dataset TXT files to CSV files using `txt_to_csv.py`:
 ```buildoutcfg
-cd gru_svm/dataset
-python3 txt_to_csv.py --txt_path gru_svm/dataset/raw/train --csv_path gru_svm/dataset/csv/train
-python3 txt_to_csv.py --txt_path gru_svm/dataset/raw/test --csv_path gru_svm/dataset/csv/test
+cd gru-svm/dataset
+python3 txt_to_csv.py --txt_path gru-svm/dataset/raw/train --csv_path gru-svm/dataset/csv/train
+python3 txt_to_csv.py --txt_path gru-svm/dataset/raw/test --csv_path gru-svm/dataset/csv/test
 ```
 
 After converting the TXT files to CSV files, the dataset is ready for normalization. Use the `normalize_data.py` to do
 so.
 ```buildoutcfg
-python3 normalize_data.py --dataset gru_svm/dataset/csv/train --write_path gru_svm/dataset/train --num_chunks 24 
-python3 normalize_data.py --dataset gru_svm/dataset/csv/test --write_path gru_svm/dataset/test --num_chunks 24
+python3 normalize_data.py --dataset gru-svm/dataset/csv/train --write_path gru-svm/dataset/train --num_chunks 24 
+python3 normalize_data.py --dataset gru-svm/dataset/csv/test --write_path gru-svm/dataset/test --num_chunks 24
 ```
 
 After normalization, perform quantile binning on the dataset. Therefore preparing the dataset for one-hot encoding.
 ```buildoutcfg
-python3 bin_data.py --dataset gru_svm/dataset/train --write_path gru_svm/dataset/train/binned --num_chunks 24 --binning 1
-python3 bin_data.py --dataset gru_svm/dataset/test --write_path gru_svm/dataset/test/binned --num_chunks 24 --binning 1
+python3 bin_data.py --dataset gru-svm/dataset/train --write_path gru-svm/dataset/train/binned --num_chunks 24 --binning 1
+python3 bin_data.py --dataset gru-svm/dataset/test --write_path gru-svm/dataset/test/binned --num_chunks 24 --binning 1
 ```
 
 Instead of using the TensorFlow Queues for feeding data from CSV files, NumPy arrays are saved from the loaded CSV
 files. In other words, the CSV files are converted to NPY files.
 ```buildoutcfg
-python3 csv_to_npy.py --csv_path gru_svm/dataset/train --npy_path gru_svm/dataset/train --npy_filename train.npy
-python3 csv_to_npy.py --csv_path gru_svm/dataset/test --npy_path gru_svm/dataset/test --npy_filename test.npy
+python3 csv_to_npy.py --csv_path gru-svm/dataset/train --npy_path gru-svm/dataset/train --npy_filename train.npy
+python3 csv_to_npy.py --csv_path gru-svm/dataset/test --npy_path gru-svm/dataset/test --npy_filename test.npy
 ```
