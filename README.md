@@ -3,13 +3,14 @@ A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support V
 
 ![](https://img.shields.io/badge/DOI-cs.NE%2F1709.03082-blue.svg)
 [![AUR](https://img.shields.io/aur/license/yaourt.svg)]()
-[![JIRA sprint completion](https://img.shields.io/badge/completion-90-orange.svg)]()
 
 The full paper on this project may be read at the following sites: [ResearchGate](https://goo.gl/muZP5A), [arXiv.org](https://arxiv.org/abs/1709.03082), [Academia.edu](https://goo.gl/8aBXpX).
 
+![](figures/gru-svm-expanded.png)
+
 ## Abstract
 Gated Recurrent Unit (GRU) is a recently-developed variation of the long short-term memory (LSTM) unit, both of which
-are types of recurrent neural network (RNN). Through empirical evidence, both models have been proven to be effective
+are variants of recurrent neural network (RNN). Through empirical evidence, both models have been proven to be effective
 in a wide variety of machine learning tasks such as natural language processing (Wen et al., 2015), speech
 recognition (Chorowski et al., 2015), and text classification (Yang et al., 2016). Conventionally, like most
 neural networks, both of the aforementioned RNN variants employ the Softmax function as its final output layer for its
@@ -38,31 +39,61 @@ by the actual training and testing time in the study.
 
 First, clone this repository:
 
-```
-~$ git clone https://github.com/AFAgarap/gru-svm.git/
-```
-
-Then, use the sample data for training the proposed GRU+SVM:
-
-```
-~$ cd gru-svm/model/
-~/gru-svm/model$ python3 gru_svm.py --train_dataset "/home/gru-svm/dataset/train" \
---validation_dataset "/home/gru-svm/dataset/test" \
---checkpoint_path "/home/gru-svm/model/checkpoint/" \
---log_path "/home/gru-svm/model/logs/" \
---model_name "gru_svm.ckpt"
+```buildoutcfg
+git clone https://github.com/AFAgarap/gru-svm.git/
 ```
 
-After training, use the trained model for the classifier:
+The following are the parameters for the module (`gru_svm_main.py`) implementing the GRU-SVM class found in `gru-svm/models/gru_svm/gru_svm.py`:
 
+```buildoutcfg
+usage: gru_svm_main.py [-h] -t TRAIN_DATASET -v VALIDATION_DATASET -c
+                       CHECKPOINT_PATH -l LOG_PATH -m MODEL_NAME -r
+                       RESULT_PATH
+
+GRU+SVM for Intrusion Detection
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+Arguments:
+  -t TRAIN_DATASET, --train_dataset TRAIN_DATASET
+                        the NumPy array training dataset (*.npy) to be used
+  -v VALIDATION_DATASET, --validation_dataset VALIDATION_DATASET
+                        the NumPy array validation dataset (*.npy) to be used
+  -c CHECKPOINT_PATH, --checkpoint_path CHECKPOINT_PATH
+                        path where to save the trained model
+  -l LOG_PATH, --log_path LOG_PATH
+                        path where to save the TensorBoard logs
+  -m MODEL_NAME, --model_name MODEL_NAME
+                        filename for the trained model
+  -r RESULT_PATH, --result_path RESULT_PATH
+                        path where to save the actual and predicted labels
 ```
-~/gru-svm/model/$ python3 gru_svm_classifier.py --dataset "/home/gru-svm/dataset/test" \
---model "/home/gru-svm/model/checkpoint/" \
---result "gru+svm_results.csv"
 
+Then, use the sample data in `gru-svm/dataset/train/train_data.npy` for training the proposed GRU-SVM:
+
+```buildoutcfg
+cd gru-svm
+python3 gru_svm_main.py --train_dataset gru-svm/dataset/train/train_data.npy \
+--validation_dataset gru-svm/dataset/test/test_data.npy \
+--checkpoint_path gru-svm/models/checkpoint/gru_svm \
+--log_path gru-svm/models/logs/gru_svm \
+--model_name gru_svm.ckpt \
+--result_path gru-svm/results/gru_svm
 ```
 
-Sample output of the classifier may be found [here](results/gru_svm_results.txt).
+The trained model can be used by executing the classifier (`gru-svm/models/gru_svm/gru_svm_classifier.py`):
+
+```buildoutcfg
+cd models/gru_svm
+python3 gru_svm_classifier.py --test_data gru-svm/dataset/test/test_data.npy
+--model gru-svm/models/checkpoint/train_10012017
+--result_path gru-svm/results/gru_svm
+```
+
+## Results
+
+The results of the study may be found in [`gru-svm/results`](https://github.com/AFAgarap/gru-svm/tree/master/results).
 
 ## License
 
