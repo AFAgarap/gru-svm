@@ -10,6 +10,15 @@ describing the data features [here](http://www.takakura.com/Kyoto_data/Benchmark
 The dataset contains logs for 360 days of the year 2013. Only the logs for the following dates are non-existing:
 (1) March 2-4, and (2) October 13-14 -- totalling to 5 days.
 
+Only the 25% of the whole 16.1 GB dataset was used for the experiment, which was further partitioned to (1) 80% for
+training dataset, and (2) 20% for testing dataset. The following is the class distribution of the said partition:
+
+|Class|Training data|Testing data|
+|-----|-------------|------------|
+|Normal|794,512|157,914|
+|Intrusion detected|1,103,728|262,694|
+
+A total of 1,898,240 instances of training data; a total of 420,608 instances of testing data.
 ### Data Pre-processing ###
 
 For the computational models in this study to utilize the dataset, it must be normalized first. That is, to standardize
