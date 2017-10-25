@@ -18,7 +18,10 @@ training dataset, and (2) 20% for testing dataset. The following is the class di
 |Normal|794,512|157,914|
 |Intrusion detected|1,103,728|262,694|
 
-A total of 1,898,240 instances of training data; a total of 420,608 instances of testing data.
+A total of 1,898,240 instances of training data; a total of 420,608 instances of testing data. The specified [training
+dataset](https://github.com/AFAgarap/gru-svm/tree/master/dataset/train) and
+[testing dataset](https://github.com/AFAgarap/gru-svm/tree/master/dataset/test) are available in this repository. 
+
 ### Data Pre-processing ###
 
 For the computational models in this study to utilize the dataset, it must be normalized first. That is, to standardize
