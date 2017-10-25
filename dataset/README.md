@@ -142,5 +142,5 @@ python3 csv_to_npy.py --csv_path gru-svm/dataset/test --npy_path gru-svm/dataset
 
 The sub-directories specified in the sample module usages are only hypothetical; you may have different sub-directories
 from these. Lastly, as the dataset is too large (i.e. 16.1 GB when uncompressed), it cannot be uploaded in this GitHub
-repository. So, you may download the dataset from the [official website of Kyoto University network traffic data]
-(http://www.takakura.com/Kyoto_data/).
+repository. So, you may download the dataset from the
+[official website of Kyoto University network traffic data](http://www.takakura.com/Kyoto_data/).
