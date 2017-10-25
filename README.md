@@ -87,7 +87,7 @@ The trained model can be used by executing the classifier (`gru-svm/models/gru_s
 ```buildoutcfg
 cd models/gru_svm
 python3 gru_svm_classifier.py --test_data gru-svm/dataset/test/test_data.npy
---model gru-svm/models/checkpoint/train_10012017
+--model gru-svm/models/checkpoint/gru_svm
 --result_path gru-svm/results/gru_svm
 ```
 
