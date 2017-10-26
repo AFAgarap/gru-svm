@@ -43,6 +43,12 @@ First, clone this repository:
 git clone https://github.com/AFAgarap/gru-svm.git/
 ```
 
+Then, install the required libraries:
+
+```buildoutcfg
+sudo pip install -r requirements.txt
+```
+
 The following are the parameters for the module (`gru_svm_main.py`) implementing the GRU-SVM class found in `gru-svm/models/gru_svm/gru_svm.py`:
 
 ```buildoutcfg
