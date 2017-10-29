@@ -52,9 +52,9 @@ sudo pip install -r requirements.txt
 The following are the parameters for the module (`gru_svm_main.py`) implementing the GRU-SVM class found in `gru-svm/models/gru_svm/gru_svm.py`:
 
 ```buildoutcfg
-usage: gru_svm_main.py [-h] -t TRAIN_DATASET -v VALIDATION_DATASET -c
-                       CHECKPOINT_PATH -l LOG_PATH -m MODEL_NAME -r
-                       RESULT_PATH
+usage: gru_svm_main.py [-h] -o OPERATION [-t TRAIN_DATASET] -v
+                       VALIDATION_DATASET -c CHECKPOINT_PATH [-l LOG_PATH]
+                       [-m MODEL_NAME] -r RESULT_PATH
 
 GRU+SVM for Intrusion Detection
 
@@ -62,6 +62,8 @@ optional arguments:
   -h, --help            show this help message and exit
 
 Arguments:
+  -o OPERATION, --operation OPERATION
+                        the operation to perform: "train" or "test"
   -t TRAIN_DATASET, --train_dataset TRAIN_DATASET
                         the NumPy array training dataset (*.npy) to be used
   -v VALIDATION_DATASET, --validation_dataset VALIDATION_DATASET
@@ -80,21 +82,36 @@ Then, use the sample data in `gru-svm/dataset/train/train_data.npy` for training
 
 ```buildoutcfg
 cd gru-svm
-python3 gru_svm_main.py --train_dataset gru-svm/dataset/train/train_data.npy \
---validation_dataset gru-svm/dataset/test/test_data.npy \
---checkpoint_path gru-svm/models/checkpoint/gru_svm \
---log_path gru-svm/models/logs/gru_svm \
+python3 gru_svm_main.py --operation "train" \
+--train_dataset dataset/train/train_data.npy \
+--validation_dataset dataset/test/test_data.npy \
+--checkpoint_path models/checkpoint/gru_svm \
 --model_name gru_svm.ckpt \
---result_path gru-svm/results/gru_svm
+--log_path models/logs/gru_svm \
+--result_path results/gru_svm
 ```
 
-The trained model can be used by executing the classifier (`gru-svm/models/gru_svm/gru_svm_classifier.py`):
+After training, the model can be used as follows:
 
 ```buildoutcfg
-cd models/gru_svm
-python3 gru_svm_classifier.py --test_data gru-svm/dataset/test/test_data.npy
---model gru-svm/models/checkpoint/gru_svm
---result_path gru-svm/results/gru_svm
+python3 gru_svm_main.py --operation "test" \
+--validation_dataset dataset/test/test_data.npy \
+--checkpoint_path models/checkpoint/gru_svm \
+--result_path results/gru_svm
+```
+
+Or simply use the prepared script files:
+
+```buildoutcfg
+# Makes the script files executable
+sudo chmod +x setup.sh
+sudo chmod +x run.sh
+
+# Installs the pre-requisite software and libraries
+./setup.sh
+
+# Runs the GRU-SVM for intrusion detection
+./run.sh
 ```
 
 ## Results
