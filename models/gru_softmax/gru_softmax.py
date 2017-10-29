@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.9'
+__version__ = '0.3.10'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -272,6 +272,89 @@ class GruSoftmax:
                 print('EOF -- Testing done at step {}'.format(step))
 
             saver.save(sess=sess, save_path=os.path.join(checkpoint_path, model_name), global_step=step)
+
+    @staticmethod
+    def predict(batch_size, cell_size, dropout_rate, num_classes, test_data, test_size, checkpoint_path, result_path):
+        """Classifies the data whether there is an intrusion or none
+
+        Parameter
+        ---------
+        batch_size : int
+          The number of batches to use for training/validation/testing.
+        cell_size : int
+          The size of cell state.
+        dropout_rate : float
+          The dropout rate to be used.
+        num_classes : int
+          The number of classes in a dataset.
+        test_data : numpy.ndarray
+          The NumPy array testing dataset.
+        test_size : int
+          The size of `test_data`.
+        checkpoint_path : str
+          The path where to save the trained model.
+        result_path : str
+          The path where to save the actual and predicted classes array.
+        """
+
+        # create initial RNN state array, filled with zeros
+        initial_state = np.zeros([batch_size, cell_size])
+
+        # cast the array to float32
+        initial_state = initial_state.astype(np.float32)
+
+        # variables initializer
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
+        with tf.Session() as sess:
+            sess.run(init_op)
+
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
+
+            if checkpoint and checkpoint.model_checkpoint_path:
+                saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+                print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
+
+            try:
+                for step in range(test_size // batch_size):
+
+                    offset = (step * batch_size) % test_size
+                    test_example_batch = test_data[0][offset:(offset + batch_size)]
+                    test_label_batch = test_data[1][offset:(offset + batch_size)]
+
+                    # one-hot encode labels according to NUM_CLASSES
+                    label_onehot = tf.one_hot(test_label_batch, num_classes, 1.0, 0.0)
+                    y_onehot = sess.run(label_onehot)
+
+                    # dictionary for input values for the tensors
+                    feed_dict = {'input/x_input:0': test_example_batch,
+                                 'initial_state:0': initial_state.astype(np.float32),
+                                 'p_keep:0': dropout_rate}
+
+                    # get the tensor for classification
+                    softmax_tensor = sess.graph.get_tensor_by_name('accuracy/Softmax:0')
+                    predictions = sess.run(softmax_tensor, feed_dict=feed_dict)
+
+                    # add key, value pair for labels
+                    feed_dict['input/y_input:0'] = test_label_batch
+
+                    # get the tensor for calculating the classification accuracy
+                    accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
+                    accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
+
+                    if step % 100 == 0 and step > 0:
+                        print('step [{}] test -- accuracy : {}'.format(step, accuracy))
+
+                    GruSoftmax.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, step=step,
+                                           phase='testing')
+
+            except tf.errors.OutOfRangeError:
+                print('EOF')
+            except KeyboardInterrupt:
+                print('KeyboardInterrupt')
+            finally:
+                print('EOF -- testing done at step {}'.format(step))
 
     @staticmethod
     def variable_summaries(var):
