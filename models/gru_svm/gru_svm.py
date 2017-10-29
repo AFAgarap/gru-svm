@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.9'
+__version__ = '0.3.10'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -188,8 +188,9 @@ class GruSvm:
         # get the time tuple
         timestamp = str(time.asctime())
 
-        train_writer = tf.summary.FileWriter(logdir=log_path + timestamp + '-training', graph=tf.get_default_graph())
-        validation_writer = tf.summary.FileWriter(logdir=log_path + timestamp + '-validation',
+        train_writer = tf.summary.FileWriter(logdir=os.path.join(log_path, timestamp + '-training'),
+                                             graph=tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter(logdir=os.path.join(log_path, timestamp + '-validation'),
                                                   graph=tf.get_default_graph())
 
         with tf.Session() as sess:
@@ -234,7 +235,7 @@ class GruSvm:
                         train_writer.add_summary(train_summary, step)
 
                         # save the model at current step
-                        saver.save(sess, checkpoint_path + model_name, global_step=step)
+                        saver.save(sess=sess, save_path=os.path.join(checkpoint_path, model_name), global_step=step)
 
                     current_state = next_state
 
@@ -275,7 +276,7 @@ class GruSvm:
 
                 print('EOF -- Testing done at step {}'.format(step))
 
-            saver.save(sess, checkpoint_path + model_name, global_step=step)
+            saver.save(sess=sess, save_path=os.path.join(checkpoint_path, model_name), global_step=step)
 
     @staticmethod
     def variable_summaries(var):
@@ -309,6 +310,9 @@ class GruSvm:
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
+
+        if not os.path.exists(path=result_path):
+            os.mkdir(path=result_path)
 
         # save the labels array to NPY file
         np.save(file=os.path.join(result_path, '{}-gru_svm-{}.npy'.format(phase, step)), arr=labels)
