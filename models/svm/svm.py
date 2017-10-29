@@ -242,8 +242,6 @@ class Svm:
 
                 print('EOF -- Testing done at step {}'.format(step))
 
-            saver.save(sess, checkpoint_path + model_name, global_step=step)
-
     @staticmethod
     def predict(batch_size, num_classes, test_data, test_size, checkpoint_path, result_path):
         """Classifies the data whether there is an intrusion or none
