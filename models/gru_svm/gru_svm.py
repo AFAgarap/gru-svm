@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-__version__ = '0.3.10'
+__version__ = '0.3.11'
 __author__ = 'Abien Fred Agarap'
 
 import numpy as np
@@ -279,6 +279,89 @@ class GruSvm:
             saver.save(sess=sess, save_path=os.path.join(checkpoint_path, model_name), global_step=step)
 
     @staticmethod
+    def predict(batch_size, cell_size, dropout_rate, num_classes, test_data, test_size, checkpoint_path, result_path):
+        """Classifies the data whether there is an intrusion or none
+
+        Parameter
+        ---------
+        batch_size : int
+          The number of batches to use for training/validation/testing.
+        cell_size : int
+          The size of cell state.
+        dropout_rate : float
+          The dropout rate to be used.
+        num_classes : int
+          The number of classes in a dataset.
+        test_data : numpy.ndarray
+          The NumPy array testing dataset.
+        test_size : int
+          The size of `test_data`.
+        checkpoint_path : str
+          The path where to save the trained model.
+        result_path : str
+          The path where to save the actual and predicted classes array.
+        """
+
+        # create initial RNN state array, filled with zeros
+        initial_state = np.zeros([batch_size, cell_size])
+
+        # cast the array to float32
+        initial_state = initial_state.astype(np.float32)
+
+        # variables initializer
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
+        with tf.Session() as sess:
+            sess.run(init_op)
+
+            # get the checkpoint file
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
+
+            if checkpoint and checkpoint.model_checkpoint_path:
+                # if checkpoint file exists, load the saved meta graph
+                saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
+                # and restore previously saved variables
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+                print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
+
+            try:
+                for step in range(test_size // batch_size):
+
+                    offset = (step * batch_size) % test_size
+                    test_features_batch = test_data[0][offset:(offset + batch_size)]
+                    test_labels_batch = test_data[1][offset:(offset + batch_size)]
+
+                    # one-hot encode labels according to NUM_CLASSES
+                    label_onehot = tf.one_hot(test_labels_batch, num_classes, 1.0, -1.0)
+                    y_onehot = sess.run(label_onehot)
+
+                    # dictionary for input values for the tensors
+                    feed_dict = {'input/x_input:0': test_features_batch,
+                                 'initial_state:0': initial_state, 'p_keep:0': dropout_rate}
+
+                    # get the tensor for classification
+                    prediction_tensor = sess.graph.get_tensor_by_name('accuracy/prediction:0')
+                    predictions = sess.run(prediction_tensor, feed_dict=feed_dict)
+
+                    # add key, value pair for labels
+                    feed_dict['input/y_input:0'] = test_labels_batch
+
+                    # get the tensor for calculating the classification accuracy
+                    accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
+                    accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
+
+                    if step % 100 == 0 and step > 0:
+                        print('step [{}] test -- accuracy : {}'.format(step, accuracy))
+
+                    GruSvm.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path,
+                                       phase='testing', step=step)
+
+            except KeyboardInterrupt:
+                print('KeyboardInterrupt at step {}'.format(step))
+            finally:
+                print('Done classifying at step {}'.format(step))
+
+    @staticmethod
     def variable_summaries(var):
         with tf.name_scope('summaries'):
             mean = tf.reduce_mean(var)
@@ -311,8 +394,9 @@ class GruSvm:
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
 
+        # Create the result_path directory if it does not exist
         if not os.path.exists(path=result_path):
             os.mkdir(path=result_path)
 
-        # save the labels array to NPY file
+        # Save the labels array to NPY file
         np.save(file=os.path.join(result_path, '{}-gru_svm-{}.npy'.format(phase, step)), arr=labels)
