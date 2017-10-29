@@ -245,6 +245,75 @@ class Svm:
             saver.save(sess, checkpoint_path + model_name, global_step=step)
 
     @staticmethod
+    def predict(batch_size, num_classes, test_data, test_size, checkpoint_path, result_path):
+        """Classifies the data whether there is an intrusion or none
+
+        Parameter
+        ---------
+        batch_size : int
+          The number of batches to use for training/validation/testing.
+        num_classes : int
+          The number of classes in a dataset.
+        test_data : numpy.ndarray
+          The NumPy array testing dataset.
+        test_size : int
+          The size of `test_data`.
+        checkpoint_path : str
+          The path where to save the trained model.
+        result_path : str
+          The path where to save the actual and predicted classes array.
+        """
+
+        # variables initializer
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
+        with tf.Session() as sess:
+            sess.run(init_op)
+
+            checkpoint = tf.train.get_checkpoint_state(checkpoint_path)
+
+            # check if trained model exists
+            if checkpoint and checkpoint.model_checkpoint_path:
+                # load the trained model
+                saver = tf.train.import_meta_graph(checkpoint.model_checkpoint_path + '.meta')
+                # restore the variables
+                saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+                print('Loaded model from {}'.format(tf.train.latest_checkpoint(checkpoint_path)))
+
+            try:
+                for step in range(test_size // batch_size):
+                    offset = (step * batch_size) % test_size
+                    test_example_batch = test_data[0][offset:(offset + batch_size)]
+                    test_label_batch = test_data[1][offset:(offset + batch_size)]
+
+                    # dictionary for input values for the tensors
+                    feed_dict = {'input/x_input:0': test_example_batch}
+
+                    # get the tensor for classification
+                    svm_tensor = sess.graph.get_tensor_by_name('accuracy/prediction:0')
+                    predictions = sess.run(svm_tensor, feed_dict=feed_dict)
+
+                    label_onehot = tf.one_hot(test_label_batch, num_classes, 1.0, -1.0)
+                    y_onehot = sess.run(label_onehot)
+
+                    # add key, value pair for labels
+                    feed_dict['input/y_input:0'] = test_label_batch
+
+                    # get the tensor for calculating the classification accuracy
+                    accuracy_tensor = sess.graph.get_tensor_by_name('accuracy/accuracy/Mean:0')
+                    accuracy = sess.run(accuracy_tensor, feed_dict=feed_dict)
+
+                    if step % 100 == 0 and step > 0:
+                        print('step [{}] test -- accuracy : {}'.format(step, accuracy))
+
+                    Svm.save_labels(predictions=predictions, actual=y_onehot, result_path=result_path, step=step,
+                                    phase='testing')
+            except KeyboardInterrupt:
+                print('KeyboardInterrupt at step {}'.format(step))
+            finally:
+                print('Done classifying at step {}'.format(step))
+
+    @staticmethod
     def variable_summaries(var):
         with tf.name_scope('summaries'):
             mean = tf.reduce_mean(var)
@@ -276,6 +345,10 @@ class Svm:
 
         # Concatenate the predicted and actual labels
         labels = np.concatenate((predictions, actual), axis=1)
+
+        # Creates the result_path directory if it does not exist
+        if not os.path.exists(path=result_path):
+            os.mkdir(path=result_path)
 
         # save every labels array to NPY file
         np.save(file=os.path.join(result_path, '{}-svm-{}.npy'.format(phase, step)), arr=labels)
