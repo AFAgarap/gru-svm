@@ -4,6 +4,9 @@ printf "Operation: [1] Train [2] Test\n>> "
 read choice
 if [ "$choice" -eq "1" ] &>/dev/null; then
 	echo "Training GRU-SVM for intrusion detection"
+	if [ ! -d "./models/checkpoint" ] &>/dev/null; then
+		mkdir models/checkpoint_path
+	fi
 	python3 gru_svm_main.py --operation "train" \
 	--train_dataset dataset/train/train_data.npy \
 	--validation_dataset dataset/test/test_data.npy \
