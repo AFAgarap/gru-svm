@@ -1,6 +1,6 @@
 ## The GRU-SVM Neural Network Architecture
 
-The proposed GRU-SVM model may be summarized as follows:
+The proposed [GRU-SVM model](https://github.com/AFAgarap/gru-svm/blob/master/models/gru_svm/gru_svm.py) may be summarized as follows:
 
 1. Input the dataset features {x i | x i ∈ R p } to the GRU model.
 2. Initialize the learning parameters *weights* and *biases* with
