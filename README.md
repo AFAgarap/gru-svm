@@ -27,12 +27,26 @@ layers indicate that the SVM would outperform Softmax in prediction time - a the
 by the actual training and testing time in the study.
 
 ## Citation
+
+To cite the paper, kindly use the following BibTex entry:
 ```
 @article{agarap2017neural,
   title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection in Network Traffic Data},
   author={Agarap, Abien Fred},
   journal={arXiv preprint arXiv:1709.03082},
   year={2017}
+}
+```
+
+To cite the repository/software, kindly use the following BibTex entry:
+```
+@misc{abien_fred_agarap_2017_1045887,
+  author       = {Abien Fred Agarap},
+  title        = {AFAgarap/gru-svm v0.3.11-alpha},
+  month        = nov,
+  year         = 2017,
+  doi          = {10.5281/zenodo.1045887},
+  url          = {https://doi.org/10.5281/zenodo.1045887}
 }
 ```
 
