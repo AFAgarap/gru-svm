@@ -11,6 +11,8 @@ The full paper on this project may be read at the following sites: [ResearchGate
 
 ![](figures/gru-svm.png)
 
+**Illustration by Andreina Mariella A. Miling. The proposed neural network architecture combines the gated recurrent unit (GRU) variant of recurrent neural network (RNN) and the linear support vector machine (SVM). The SVM is then used as the classifier of the neural network.**
+
 ## Abstract
 Gated Recurrent Unit (GRU) is a recently-developed variation of the long short-term memory (LSTM) unit, both of which
 are variants of recurrent neural network (RNN). Through empirical evidence, both models have been proven to be effective
