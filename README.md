@@ -9,7 +9,7 @@ A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support V
 
 The full paper on this project may be read at the following sites: [ResearchGate](https://goo.gl/muZP5A), [arXiv.org](https://arxiv.org/abs/1709.03082), [Academia.edu](https://goo.gl/8aBXpX).
 
-![](figures/gru-svm-expanded.png)
+![](figures/gru-svm.png)
 
 ## Abstract
 Gated Recurrent Unit (GRU) is a recently-developed variation of the long short-term memory (LSTM) unit, both of which
