@@ -34,11 +34,13 @@ by the actual training and testing time in the study.
 
 To cite the paper, kindly use the following BibTex entry:
 ```
-@article{agarap2017neural,
+@inproceedings{agarap2018neural,
   title={A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support Vector Machine (SVM) for Intrusion Detection in Network Traffic Data},
-  author={Agarap, Abien Fred},
-  journal={arXiv preprint arXiv:1709.03082},
-  year={2017}
+  author={Agarap, Abien Fred M},
+  booktitle={Proceedings of the 2018 10th International Conference on Machine Learning and Computing},
+  pages={26--30},
+  year={2018},
+  organization={ACM}
 }
 ```
 
