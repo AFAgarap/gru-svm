@@ -7,7 +7,7 @@ A Neural Network Architecture Combining Gated Recurrent Unit (GRU) and Support V
 
 *This is an accepted paper at the 10th International Conference on Machine Learning and Computing (ICMLC) in Macau, China on February 26-28, 2018.*
 
-The full paper on this project may be read at the following sites: [ResearchGate](https://goo.gl/muZP5A), [arXiv.org](https://arxiv.org/abs/1709.03082), [Academia.edu](https://goo.gl/8aBXpX), and [ACM Digital Library](https://dl.acm.org/citation.cfm?id=3195117).
+The full paper on this project may be read at [arXiv.org](https://arxiv.org/abs/1709.03082).
 
 ![](figures/gru-svm.png)
 
