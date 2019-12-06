@@ -21,7 +21,7 @@ import pandas as pd
 import normalize_data
 
 # a sample data to describe using pandas
-PATH = '/home/darth/GitHub Projects/gru_svm/dataset/train/4/attack'
+PATH = "/home/darth/GitHub Projects/gru_svm/dataset/train/4/attack"
 
 # get the column names from normalize_data.py module
 COL_NAMES = normalize_data.COLUMN_NAMES
@@ -38,7 +38,9 @@ for (dirpath, dirnames, filenames) in os.walk(PATH):
 
 # append the data from files to df
 for file in files:
-    df = df.append(pd.read_csv(filepath_or_buffer=file, names=COL_NAMES, engine='python'))
+    df = df.append(
+        pd.read_csv(filepath_or_buffer=file, names=COL_NAMES, engine="python")
+    )
 
 # print the data summary
 print(df.describe())
