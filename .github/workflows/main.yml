@@ -2,7 +2,7 @@ name: GRU-SVM
 
 on:
   push:
-    branches: 
+    branches:
       - master
 
 jobs:

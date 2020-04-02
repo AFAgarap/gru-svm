@@ -7,14 +7,14 @@
 2017-08-21 22:50:21.355164: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
 2017-08-21 22:50:21.355168: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
 2017-08-21 22:50:21.436926: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:893] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
-2017-08-21 22:50:21.437165: I tensorflow/core/common_runtime/gpu/gpu_device.cc:940] Found device 0 with properties: 
+2017-08-21 22:50:21.437165: I tensorflow/core/common_runtime/gpu/gpu_device.cc:940] Found device 0 with properties:
 name: GeForce GTX 960M
 major: 5 minor: 0 memoryClockRate (GHz) 1.176
 pciBusID 0000:02:00.0
 Total memory: 3.95GiB
 Free memory: 3.48GiB
-2017-08-21 22:50:21.437179: I tensorflow/core/common_runtime/gpu/gpu_device.cc:961] DMA: 0 
-2017-08-21 22:50:21.437184: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] 0:   Y 
+2017-08-21 22:50:21.437179: I tensorflow/core/common_runtime/gpu/gpu_device.cc:961] DMA: 0
+2017-08-21 22:50:21.437184: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] 0:   Y
 2017-08-21 22:50:21.437191: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1030] Creating TensorFlow device (/gpu:0) -> (device: 0, name: GeForce GTX 960M, pci bus id: 0000:02:00.0)
 2017-08-21 22:50:21.844510: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: Reached limit of 1
 	 [[Node: input_producer_1/limit_epochs/CountUpTo = CountUpTo[T=DT_INT64, _class=["loc:@input_producer_1/limit_epochs/epochs"], limit=1, _device="/job:localhost/replica:0/task:0/cpu:0"](input_producer_1/limit_epochs/epochs)]]

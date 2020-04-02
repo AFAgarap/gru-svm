@@ -20,7 +20,7 @@ in a wide variety of machine learning tasks such as natural language processing 
 recognition (Chorowski et al., 2015), and text classification (Yang et al., 2016). Conventionally, like most
 neural networks, both of the aforementioned RNN variants employ the Softmax function as its final output layer for its
 prediction, and the cross-entropy function for computing its loss. In this paper, we present an amendment to this norm
-by introducing linear support vector machine (SVM) as the replacement for Softmax in the final output layer of a GRU 
+by introducing linear support vector machine (SVM) as the replacement for Softmax in the final output layer of a GRU
 model. Furthermore, the cross-entropy function shall be replaced with a margin-based function. While there have been
 similar studies (Alalshekmubarak & Smith, 2013; Tang, 2013), this proposal is primarily intended for binary
 classification on intrusion detection using the 2013 network traffic data from the honeypot systems of Kyoto University.

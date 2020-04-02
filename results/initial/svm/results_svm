@@ -7,14 +7,14 @@
 2017-08-21 15:28:38.454461: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
 2017-08-21 15:28:38.454465: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
 2017-08-21 15:28:38.534376: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:893] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
-2017-08-21 15:28:38.534963: I tensorflow/core/common_runtime/gpu/gpu_device.cc:940] Found device 0 with properties: 
+2017-08-21 15:28:38.534963: I tensorflow/core/common_runtime/gpu/gpu_device.cc:940] Found device 0 with properties:
 name: GeForce GTX 960M
 major: 5 minor: 0 memoryClockRate (GHz) 1.176
 pciBusID 0000:02:00.0
 Total memory: 3.95GiB
 Free memory: 3.39GiB
-2017-08-21 15:28:38.534982: I tensorflow/core/common_runtime/gpu/gpu_device.cc:961] DMA: 0 
-2017-08-21 15:28:38.534987: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] 0:   Y 
+2017-08-21 15:28:38.534982: I tensorflow/core/common_runtime/gpu/gpu_device.cc:961] DMA: 0
+2017-08-21 15:28:38.534987: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] 0:   Y
 2017-08-21 15:28:38.534995: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1030] Creating TensorFlow device (/gpu:0) -> (device: 0, name: GeForce GTX 960M, pci bus id: 0000:02:00.0)
 step [0] train -- loss : 234.00559997558594, accuracy : 0.82421875
 2017-08-21 15:28:41.693159: I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 3518 get requests, put_count=3228 evicted_count=1000 eviction_rate=0.309789 and unsatisfied allocation rate=0.395111

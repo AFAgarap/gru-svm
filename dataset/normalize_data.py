@@ -116,24 +116,24 @@ def normalize_data(path):
     Current DataFrame shape: (3, 24)
     DataFrame shape after NaN values removal: (3, 24)
        duration  service  src_bytes  dest_bytes  count  same_srv_rate  \
-    0 -0.784854        0  -0.707107   -0.707107    0.0            0.0   
-    1 -0.626398        0  -0.707107   -0.707107    0.0            0.0   
-    2  1.411251        1   1.414214    1.414214    0.0            0.0   
+    0 -0.784854        0  -0.707107   -0.707107    0.0            0.0
+    1 -0.626398        0  -0.707107   -0.707107    0.0            0.0
+    2  1.411251        1   1.414214    1.414214    0.0            0.0
 
        serror_rate  srv_serror_rate  dst_host_count  dst_host_srv_count    ...     \
-    0          0.0        -0.707107        1.414214           -0.687558    ...      
-    1          0.0         1.414214       -0.707107           -0.726477    ...      
-    2          0.0        -0.707107       -0.707107            1.414035    ...      
+    0          0.0        -0.707107        1.414214           -0.687558    ...
+    1          0.0         1.414214       -0.707107           -0.726477    ...
+    2          0.0        -0.707107       -0.707107            1.414035    ...
 
        ids_detection  malware_detection  ashula_detection  label  src_ip_add  \
-    0              0                  0                 0      1           2   
-    1              0                  0                 0      1           0   
-    2              0                  0                 0      0           1   
+    0              0                  0                 0      1           2
+    1              0                  0                 0      1           0
+    2              0                  0                 0      0           1
 
-       src_port_num  dst_ip_add  dst_port_num  start_time  protocol  
-    0      1.391614           0      0.707107         0.0         0  
-    1     -0.913883           1      0.707107         0.0         0  
-    2     -0.477731           2     -1.414214         0.0         0  
+       src_port_num  dst_ip_add  dst_port_num  start_time  protocol
+    0      1.391614           0      0.707107         0.0         0
+    1     -0.913883           1      0.707107         0.0         0
+    2     -0.477731           2     -1.414214         0.0         0
 
     [3 rows x 24 columns]
     """

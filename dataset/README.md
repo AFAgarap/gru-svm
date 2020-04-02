@@ -20,7 +20,7 @@ training dataset, and (2) 20% for testing dataset. The following is the class di
 
 A total of 1,898,240 instances of training data; a total of 420,608 instances of testing data. The specified [training
 dataset](https://github.com/AFAgarap/gru-svm/tree/master/dataset/train) and
-[testing dataset](https://github.com/AFAgarap/gru-svm/tree/master/dataset/test) are available in this repository. 
+[testing dataset](https://github.com/AFAgarap/gru-svm/tree/master/dataset/test) are available in this repository.
 
 ### Data Pre-processing ###
 
@@ -123,7 +123,7 @@ python3 txt_to_csv.py --txt_path gru-svm/dataset/raw/test --csv_path gru-svm/dat
 After converting the TXT files to CSV files, the dataset is ready for normalization. Use the `normalize_data.py` to do
 so.
 ```buildoutcfg
-python3 normalize_data.py --dataset gru-svm/dataset/csv/train --write_path gru-svm/dataset/train --num_chunks 24 
+python3 normalize_data.py --dataset gru-svm/dataset/csv/train --write_path gru-svm/dataset/train --num_chunks 24
 python3 normalize_data.py --dataset gru-svm/dataset/csv/test --write_path gru-svm/dataset/test --num_chunks 24
 ```
 
